@@ -1,0 +1,13 @@
+name: mirrors
+version: 0.1.0
+
+authors:
+  -  <>
+
+targets:
+  mirrors:
+    main: src/mirrors.cr
+
+crystal: 0.23.1
+
+license: MIT
