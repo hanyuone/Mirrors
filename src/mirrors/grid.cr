@@ -8,10 +8,7 @@ module Mirrors
     @specials_grid : Array(Array(Item?))
     @light : Light
 
-    def initialize(@tile_grid, @specials_grid)
-      # TODO: Change line into something else
-      @light = Light.new({2, 0}, Direction::Up)
-    end
+    def initialize(@light, @tile_grid, @specials_grid); end
 
     # Move the light in a certain direction
     private def move_light
@@ -47,6 +44,7 @@ module Mirrors
     # The main simulator for Mirrors.
     def play
       success = false
+      pp @specials_grid
 
       loop do
         light_tile
