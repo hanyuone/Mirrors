@@ -9,5 +9,5 @@
 
 require "./mirrors/*"
 
-test = Mirrors::LevelReader.parse("resources/level.json")
+test = Mirrors::LevelReader.parse("resources/level1.json")
 test.play

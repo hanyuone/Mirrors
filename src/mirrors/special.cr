@@ -58,7 +58,8 @@ module Mirrors
     end
   end
 
-  # Switches
+  # Switch - toggles various tiles on the board to
+  # one of two states each.
   class Switch
     property :items
     @items : Array(Tuple(Coords, Special?, Special?))

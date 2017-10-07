@@ -6,9 +6,10 @@ module Mirrors
   class Grid
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
+    @inventory : Array(Item)
     @light : Light
 
-    def initialize(@light, @tile_grid, @specials_grid); end
+    def initialize(@light, @inventory, @tile_grid, @specials_grid); end
 
     # Move the light in a certain direction
     private def move_light
@@ -38,11 +39,30 @@ module Mirrors
       width = @tile_grid[0].size
       height = @tile_grid.size
 
-      return !(0 <= coords[0] < width && 0 <= coords[0] < height)
+      return !(0 <= coords[0] < width && 0 <= coords[1] < height)
+    end
+
+    private def place_items
+      loop do
+        puts "Your current item is: #{@inventory[0]}"
+        print "Where are you going to place your item? "
+        input = gets.not_nil!.chomp
+
+        break if input == ""
+
+        input = input.split(" ").map(&.to_i)
+
+        @specials_grid[input[0]][input[1]] = @inventory[0]
+        @inventory = @inventory[1..-1]
+
+        break if @inventory.size.zero?
+      end
     end
 
     # The main simulator for Mirrors.
     def play
+      place_items
+
       success = false
       pp @specials_grid
 
@@ -51,11 +71,10 @@ module Mirrors
 
         # Checks if all the tiles have been lit, if they have
         # then the level is successfully complete
-        tile_state =
-          @tile_grid
-            .flatten
-            .reject(&.nil?)
-            .reduce { |a, b| a && b }
+        tile_state = @tile_grid
+          .flatten
+          .reject(&.nil?)
+          .reduce { |a, b| a && b }
 
         if tile_state
           success = true

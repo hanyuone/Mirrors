@@ -48,7 +48,7 @@ module Mirrors
 
     # Converts an array containing two integers (as JSON::Type)
     # into a tuple, which the `Grid` class can use
-    private def to_coords(arr : JSONArray) : Coords
+    private def self.to_coords(arr : JSONArray) : Coords
       return {arr[0].as(Int64).to_i32, arr[1].as(Int64).to_i32}
     end
 
@@ -104,6 +104,10 @@ module Mirrors
 
       light = Light.new(light_coords, light_dir)
 
+      # Get the inventory - i.e. what tiles can be placed down
+      inventory = level["inventory"].as_a.map(&.as(JSONHash))
+      inventory = inventory.map { |a| parse_item(a).not_nil! }
+
       # Create the tile board for the grid (i.e. the board
       # containing the tiles which need to be lit up)
       tile_coords = level["tiles"].as_a.map(&.as(JSONArray)).map { |a| to_coords(a) }
@@ -125,7 +129,7 @@ module Mirrors
         item_arr.place_item(parse_item(item), item_coords)
       end
 
-      return Grid.new(light, tile_arr.arr, item_arr.arr)
+      return Grid.new(light, inventory, tile_arr.arr, item_arr.arr)
     end
   end
 end
