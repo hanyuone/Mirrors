@@ -1,9 +1,11 @@
-require "./special.cr"
+require "./items/*"
 
 module Mirrors
   alias Item = Special | Switch
 
   class Grid
+    getter :tile_grid, :specials_grid
+    
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
     @inventory : Array(Item)
@@ -35,6 +37,7 @@ module Mirrors
       pp @tile_grid
     end
 
+    # Calculates if a tile is out-of-bounds or not
     private def out_of_bounds?(coords : Coords) : Bool
       width = @tile_grid[0].size
       height = @tile_grid.size
@@ -42,6 +45,7 @@ module Mirrors
       return !(0 <= coords[0] < width && 0 <= coords[1] < height)
     end
 
+    # Prompts the user to place an item down
     private def place_items
       loop do
         puts "Your current item is: #{@inventory[0]}"
@@ -73,7 +77,7 @@ module Mirrors
         # then the level is successfully complete
         tile_state = @tile_grid
           .flatten
-          .reject(&.nil?)
+          .compact
           .reduce { |a, b| a && b }
 
         if tile_state

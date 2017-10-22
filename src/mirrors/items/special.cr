@@ -3,14 +3,14 @@ require "./direction.cr"
 module Mirrors
   alias Coords = Tuple(Int32, Int32)
 
-  class Special
-    def initialize; end
-    def apply(light : Light); end
+  abstract class Special
+    abstract def apply(light : Light)
   end
 
   # Left and right mirrors
   class LeftMirror < Special
     def initialize; end
+    
     def apply(light : Light)
       change_dirs = {
         Direction::Left => Direction::Down,
@@ -25,6 +25,7 @@ module Mirrors
 
   class RightMirror < Special
     def initialize; end
+
     def apply(light : Light)
       change_dirs = {
         Direction::Left => Direction::Up,

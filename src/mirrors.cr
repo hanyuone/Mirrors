@@ -7,7 +7,11 @@
 #   - Config CrSFML
 #   - Create basic GUI
 
-require "./mirrors/*"
+require "./mirrors/**"
 
-test = Mirrors::LevelReader.parse("resources/level1.json")
-test.play
+test = Mirrors::Window.new
+json = Mirrors::LevelReader.parse("resources/level1.json")
+level = Mirrors::LevelDisplay.new(json)
+
+test.display = level
+test.show

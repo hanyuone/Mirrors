@@ -2,3 +2,6 @@
 /lib/
 /bin/
 /.shards/
+/.vscode/
+/.editorconfig
+/build.sh
