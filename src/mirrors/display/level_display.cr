@@ -1,10 +1,13 @@
 require "../grid.cr"
+require "./display.cr"
 
 module Mirrors
   class LevelDisplay < Display
+    @listener : Listener?
+    @texture : SF::RenderTexture
+
     @dimension : Int32
     @grid : Grid
-    @texture : SF::RenderTexture
 
     private def calc_dimensions
       x_amount, y_amount = @grid.tile_grid[0].size, @grid.tile_grid.size
@@ -15,8 +18,10 @@ module Mirrors
     end
 
     def initialize(@grid)
+      super()
+
+      @listener = Listener.new
       @dimension = 0
-      @texture = SF::RenderTexture.new(800, 600)
       calc_dimensions
     end
 
@@ -28,15 +33,14 @@ module Mirrors
           square = SF::RectangleShape.new({@dimension, @dimension})
           square.position = {20 + (x * @dimension), 20 + (y * @dimension)}
 
-          square.fill_color =
-            case tiles[x][y]
-              when true
-                SF::Color.new(200, 200, 200)
-              when false
-                SF::Color::White
-              else
-                SF::Color::Transparent
-            end
+          square.fill_color = case tiles[x][y]
+            when true
+              SF::Color.new(200, 200, 200)
+            when false
+              SF::Color::White
+            else
+              SF::Color::Transparent
+          end
 
           @texture.draw(square)
         end
@@ -45,21 +49,25 @@ module Mirrors
 
     private def draw_special(x, y)
       special = @grid.specials_grid[x][y]
+      return if special.nil?
+      
+      tile = SF::RenderTexture.new(50, 50)
 
-      font = SF::Font.from_file("resources/FiraCode.ttf")
-      text = SF::Text.new(
-        case special
-          when LeftMirror then "/"
-          when RightMirror then "\\"
-          when Teleporter then "T"
-          when Switch then "S"
-          else ""
-        end, font, 30
-      )
-      text.color = SF::Color::Black
-      text.position = {20 + (x * @dimension), 20 + (y * @dimension)}
+      tile.clear case special
+        when LeftMirror
+          SF::Color::Red
+        when RightMirror
+          SF::Color::Blue
+        when Switch
+          SF::Color::Green
+        when Teleporter
+          SF::Color::Yellow
+        else
+          SF::Color::Transparent
+      end
 
-      @texture.draw(text)
+      sprite = SF::Sprite.new(tile.texture)
+      @listener.not_nil!.add_draggable(sprite)
     end
 
     private def draw_specials
@@ -73,12 +81,25 @@ module Mirrors
     end
 
     private def draw_inventory
+      inventory = @grid.inventory
+    end
+
+    private def draw_menu
     end
 
     def draw : SF::Texture
       draw_tiles
       draw_specials
       draw_inventory
+      draw_menu
+
+      @listener.not_nil!.draggables.each do |sprite|
+        @texture.draw(sprite)
+      end
+
+      @listener.not_nil!.buttons.each do |button|
+        @texture.draw(button.sprite)
+      end
 
       @texture.display
 

@@ -4,7 +4,7 @@ module Mirrors
   alias Item = Special | Switch
 
   class Grid
-    getter :tile_grid, :specials_grid
+    getter :tile_grid, :specials_grid, :inventory
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))

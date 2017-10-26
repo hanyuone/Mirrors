@@ -1,4 +1,5 @@
 require "crsfml"
+require "./display/display.cr"
 
 module Mirrors
   class Window
@@ -17,10 +18,16 @@ module Mirrors
     def show
       while @window.open?
         while (event = @window.poll_event)
-          if event.is_a?(SF::Event::Closed)
-            @window.close
+          case event
+            when SF::Event::Closed
+              @window.close
+            when SF::Event::MouseButtonPressed
+              mouse_pos = SF::Mouse.get_position(@window)
+              @display.listener.listen(mouse_pos) unless @display.nil? || @display.listener.nil?
           end
         end
+
+        @display.listener.reset unless @display.nil? || @display.listener.nil?
 
         sprite = SF::Sprite.new(@display.not_nil!.draw)
         sprite.position = {0, 0}
