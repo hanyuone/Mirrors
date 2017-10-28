@@ -47,27 +47,25 @@ module Mirrors
       end
     end
 
-    private def draw_special(x, y)
+    private def decide_colour(item : Item) : SF::Color
+      return case item
+        when LeftMirror then SF::Color::Red
+        when RightMirror then SF::Color::Blue
+        when Teleporter then SF::Color::Yellow
+        when Switch then SF::Color::Green
+        else SF::Color::Transparent
+      end
+    end
+
+    private def draw_special(x : Int32, y : Int32)
       special = @grid.specials_grid[x][y]
       return if special.nil?
-      
-      tile = SF::RenderTexture.new(50, 50)
 
-      tile.clear case special
-        when LeftMirror
-          SF::Color::Red
-        when RightMirror
-          SF::Color::Blue
-        when Switch
-          SF::Color::Green
-        when Teleporter
-          SF::Color::Yellow
-        else
-          SF::Color::Transparent
-      end
+      tile = SF::RectangleShape.new({50, 50})
+      tile.position = {20 + (x * @dimension), 20 + (y * @dimension)}
+      tile.fill_color = decide_colour(special)
 
-      sprite = SF::Sprite.new(tile.texture)
-      @listener.not_nil!.add_draggable(sprite)
+      @texture.draw(tile)
     end
 
     private def draw_specials
@@ -82,6 +80,16 @@ module Mirrors
 
     private def draw_inventory
       inventory = @grid.inventory
+
+      inventory.each do |item|
+        texture = SF::RenderTexture.new
+        texture.clear(decide_colour(item))
+
+        sprite = SF::Sprite.new(texture.texture)
+        sprite.position = {620, 20}
+
+        @listener.try(&.add_item(sprite))
+      end
     end
 
     private def draw_menu
@@ -93,13 +101,13 @@ module Mirrors
       draw_inventory
       draw_menu
 
-      @listener.not_nil!.draggables.each do |sprite|
-        @texture.draw(sprite)
-      end
+      # @listener.try(&.draggables).each do |sprite|
+      #   @texture.draw(sprite)
+      # end
 
-      @listener.not_nil!.buttons.each do |button|
-        @texture.draw(button.sprite)
-      end
+      # @listener.try(&.buttons).each do |button|
+      #   @texture.draw(button.sprite)
+      # end
 
       @texture.display
 

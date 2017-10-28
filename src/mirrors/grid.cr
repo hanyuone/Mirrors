@@ -63,6 +63,12 @@ module Mirrors
       end
     end
 
+    def place_item(index : Int32, x : Int32, y : Int32)
+      raise ArgumentError.new("Index out of bounds") if index >= @inventory[index]
+      @specials_grid[x][y] = @inventory[index]
+      @inventory.delete_at(index)
+    end
+
     # The main simulator for Mirrors.
     def play
       place_items

@@ -1,10 +1,13 @@
 module Mirrors
-  class Button
-    getter :sprite, :fn
-    @sprite : SF::Sprite
-    @fn : Void -> Void
+  class Button < SF::Sprite
+    @fn : Proc(Nil)
 
-    def initialize(@sprite, @fn); end
-    def run; @fn.call; end
+    def initialize(texture : SF::Texture, @fn)
+      super texture
+    end
+
+    def run
+      @fn.call
+    end
   end
 end
