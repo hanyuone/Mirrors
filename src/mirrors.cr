@@ -66,6 +66,9 @@ class TestDisplay < Mirrors::Display
 end
 
 test = Mirrors::Window.new
-display = TestDisplay.new
+
+grid = Mirrors::LevelReader.parse("resources/level1.json")
+display = Mirrors::LevelDisplay.new(grid)
+
 test.display = display
 test.show

@@ -22,7 +22,27 @@ module Mirrors
 
       @listener = Listener.new
       @dimension = 0
+
       calc_dimensions
+      draw_inventory
+    end
+
+    private def draw_tile(x : Int32, y : Int32)
+      tiles = @grid.tile_grid
+
+      square = SF::RectangleShape.new({@dimension, @dimension})
+      square.position = {20 + (x * @dimension), 20 + (y * @dimension)}
+
+      square.fill_color = case tiles[x][y]
+        when true
+          SF::Color.new(200, 200, 200)
+        when false
+          SF::Color::White
+        else
+          SF::Color::Transparent
+      end
+
+      @texture.draw(square)
     end
 
     private def draw_tiles
@@ -30,19 +50,7 @@ module Mirrors
 
       (0...tiles.size).each do |x|
         (0...tiles[0].size).each do |y|
-          square = SF::RectangleShape.new({@dimension, @dimension})
-          square.position = {20 + (x * @dimension), 20 + (y * @dimension)}
-
-          square.fill_color = case tiles[x][y]
-            when true
-              SF::Color.new(200, 200, 200)
-            when false
-              SF::Color::White
-            else
-              SF::Color::Transparent
-          end
-
-          @texture.draw(square)
+          draw_tile(x, y)
         end
       end
     end
@@ -53,8 +61,7 @@ module Mirrors
         when RightMirror then SF::Color::Blue
         when Teleporter then SF::Color::Yellow
         when Switch then SF::Color::Green
-        else SF::Color::Transparent
-      end
+      end.not_nil!
     end
 
     private def draw_special(x : Int32, y : Int32)
@@ -79,11 +86,16 @@ module Mirrors
     end
 
     private def draw_inventory
-      inventory = @grid.inventory
+      @grid.inventory.each do |item|
+        texture = SF::RenderTexture.new(@dimension, @dimension)
+        texture.clear
+        
+        square = SF::RectangleShape.new({@dimension, @dimension})
+        square.fill_color = decide_colour(item)
+        square.position = {0, 0}
 
-      inventory.each do |item|
-        texture = SF::RenderTexture.new
-        texture.clear(decide_colour(item))
+        texture.draw(square)
+        texture.display
 
         sprite = SF::Sprite.new(texture.texture)
         sprite.position = {620, 20}
@@ -96,18 +108,15 @@ module Mirrors
     end
 
     def draw : SF::Texture
+      @texture.clear
+
       draw_tiles
       draw_specials
-      draw_inventory
       draw_menu
 
-      # @listener.try(&.draggables).each do |sprite|
-      #   @texture.draw(sprite)
-      # end
-
-      # @listener.try(&.buttons).each do |button|
-      #   @texture.draw(button.sprite)
-      # end
+      @listener.not_nil!.items.each do |item|
+        @texture.draw(item)
+      end
 
       @texture.display
 
