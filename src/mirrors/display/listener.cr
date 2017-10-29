@@ -15,29 +15,30 @@ require "./button.cr"
 module Mirrors
   class Listener
     getter :items
+    getter :prev_pos, :mouse_pos
     POS_NIL = {-1, -1}
 
-    @items : Array(SF::Sprite)
+    @items : Array(Tuple(SF::Sprite, Bool))
     @prev_pos : Tuple(Int32, Int32)
     @mouse_pos : Tuple(Int32, Int32)
 
     def initialize
-      @items = [] of SF::Sprite
+      @items = [] of Tuple(SF::Sprite, Bool)
       @prev_pos = POS_NIL
       @mouse_pos = POS_NIL
     end
 
-    def add_item(item : SF::Sprite)
-      @items.unshift(item)
+    def add_item(item : SF::Sprite, locked : Bool = false)
+      @items.unshift({item, locked})
     end
 
     def listen(pos : Tuple(Int32, Int32))
       @items.each do |item|
-        next unless item.in_bounds?(pos)
+        next if item[1] || !item[0].in_bounds?(pos)
 
         if @mouse_pos != POS_NIL
-          current_pos = item.position
-          item.position = {current_pos[0] + (pos[0] - @mouse_pos[0]), current_pos[1] + (pos[1] - @mouse_pos[1])}
+          current_pos = item[0].position
+          item[0].position = {current_pos[0] + pos[0] - @mouse_pos[0], current_pos[1] + pos[1] - @mouse_pos[1]}
         end
 
         break
@@ -48,7 +49,7 @@ module Mirrors
     end
 
     def reset
-      @items.each do |item|
+      @items.map { |item| item[0] }.each do |item|
         next unless item.in_bounds?(@mouse_pos)
         item.run if item.is_a?(Button) && @prev_pos == POS_NIL
         break
@@ -56,6 +57,10 @@ module Mirrors
 
       @prev_pos = POS_NIL
       @mouse_pos = POS_NIL
+    end
+
+    def items
+      return @items.map { |item| item[0] }
     end
   end
 end

@@ -14,14 +14,26 @@ class TestDisplay < Mirrors::Display
   @listener : Mirrors::Listener?
   @texture : SF::RenderTexture
 
+  @counter = 0
+
   private def add_items
     render = SF::RenderTexture.new(50, 50)
-    render.clear(SF::Color::White)
+    rect = SF::RectangleShape.new({50, 50})
+    rect.position = {0, 0}
+    rect.fill_color = SF::Color::Red
+
+    render.clear
+    render.draw(rect)
     render.display
-    sprite = SF::Sprite.new(render.texture)
+
+    sprite = Mirrors::Button.new(render.texture, ->() {
+      puts @counter
+      @counter += 1
+      return
+    })
     sprite.position = {10, 10}
 
-    @listener.not_nil!.add_item(sprite)
+    @listener.not_nil!.add_item(sprite, true)
   end
 
   def initialize
@@ -31,13 +43,24 @@ class TestDisplay < Mirrors::Display
     add_items
   end
 
+  def draw_items
+    square = SF::RectangleShape.new({100, 100})
+    square.fill_color = SF::Color::White
+    square.position = {200, 200}
+
+    @texture.draw(square)
+  end
+
   def draw : SF::Texture
     @texture.clear
+
+    draw_items
 
     @listener.not_nil!.items.each do |item|
       @texture.draw(item)
     end
 
+    @texture.display
     return @texture.texture
   end
 end
