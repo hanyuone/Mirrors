@@ -1,5 +1,5 @@
 require "../grid.cr"
-require "./display.cr"
+require "./helpers/display.cr"
 
 module Mirrors
   class LevelDisplay < Display
@@ -9,6 +9,8 @@ module Mirrors
     @dimension : Int32
     @grid : Grid
 
+    @disp_inventory : Array(SF::Sprite)
+
     private def calc_dimensions
       x_amount, y_amount = @grid.tile_grid[0].size, @grid.tile_grid.size
       width = 560 / x_amount
@@ -17,14 +19,57 @@ module Mirrors
       @dimension = [width, height].min
     end
 
+    private def add_inventory
+      @grid.inventory.each do |tup|
+        item = tup[0]
+
+        texture = SF::RenderTexture.new(@dimension, @dimension)
+        texture.clear
+        
+        square = SF::RectangleShape.new({@dimension, @dimension})
+        square.fill_color = decide_colour(item)
+        square.position = {0, 0}
+
+        texture.draw(square)
+        texture.display
+
+        sprite = SF::Sprite.new(texture.texture)
+        sprite.position = {620, 20}
+
+        @disp_inventory.push(sprite)
+        @listener.try(&.add_item(sprite))
+      end
+    end
+
+    private def add_menu
+      font = SF::Font.from_file("resources/FiraCode.ttf")
+      button_text = SF::Text.new("Run", font)
+      button_text.position = {0, 0}
+      
+      button_texture = SF::RenderTexture.new(100, 40)
+      button_texture.clear
+      button_texture.draw(button_text)
+      button_texture.display
+
+      button = Button.new(button_texture.texture, ->() {
+        @grid.play        
+      })
+      button.position = {650, 530}
+
+      @listener.try(&.add_item(button, true))
+    end
+
     def initialize(@grid)
       super()
 
       @listener = Listener.new
       @dimension = 0
 
+      @disp_inventory = [] of SF::Sprite
+
       calc_dimensions
-      draw_inventory
+      add_inventory
+      add_menu
     end
 
     private def draw_tile(x : Int32, y : Int32)
@@ -34,9 +79,9 @@ module Mirrors
       square.position = {20 + (x * @dimension), 20 + (y * @dimension)}
 
       square.fill_color = case tiles[x][y]
-        when true
-          SF::Color.new(200, 200, 200)
         when false
+          SF::Color.new(150, 150, 150)
+        when true
           SF::Color::White
         else
           SF::Color::Transparent
@@ -85,42 +130,40 @@ module Mirrors
       end
     end
 
-    private def draw_inventory
-      @grid.inventory.each do |item|
-        texture = SF::RenderTexture.new(@dimension, @dimension)
-        texture.clear
-        
-        square = SF::RectangleShape.new({@dimension, @dimension})
-        square.fill_color = decide_colour(item)
-        square.position = {0, 0}
+    private def lock_inventory
+      (0...@disp_inventory.size).each do |a|
+        sprite = @disp_inventory[a]
+        item = @grid.inventory[a]
 
-        texture.draw(square)
-        texture.display
+        pos = sprite.position
+        close_test = {
+          (pos[0] + @dimension - 20) % @dimension,
+          (pos[1] + @dimension - 20) % @dimension
+        }
 
-        sprite = SF::Sprite.new(texture.texture)
-        sprite.position = {620, 20}
-
-        @listener.try(&.add_item(sprite))
+        if ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) && ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
+          grid_coord = {
+            ((pos[0] - 20.0) / @dimension).round.to_i32,
+            ((pos[1] - 20.0) / @dimension).round.to_i32
+          }
+          sprite.position = {
+            (grid_coord[0] * @dimension) + 20,
+            (grid_coord[1] * @dimension) + 20
+          }
+          @grid.place_item(a, grid_coord[0], grid_coord[1])
+        end
       end
     end
 
-    private def draw_menu
-    end
-
-    def draw : SF::Texture
-      @texture.clear
-
+    def draw
       draw_tiles
       draw_specials
-      draw_menu
 
       @listener.not_nil!.items.each do |item|
         @texture.draw(item)
       end
 
-      @texture.display
-
-      return @texture.texture
+      lock_inventory if @listener.not_nil!.has_reset
     end
   end
 end

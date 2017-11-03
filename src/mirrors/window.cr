@@ -1,5 +1,5 @@
 require "crsfml"
-require "./display/display.cr"
+require "./display/helpers/display.cr"
 
 module Mirrors
   class Window
@@ -12,7 +12,7 @@ module Mirrors
     end
 
     private def display_items
-      sprite = SF::Sprite.new(@display.not_nil!.draw)
+      sprite = SF::Sprite.new(@display.not_nil!.screen)
       sprite.position = {0, 0}
       
       @window.clear

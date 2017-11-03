@@ -14,18 +14,20 @@ require "./button.cr"
 
 module Mirrors
   class Listener
-    getter :items
-    getter :prev_pos, :mouse_pos
+    getter :items, :prev_pos, :mouse_pos, :has_reset
     POS_NIL = {-1, -1}
 
     @items : Array(Tuple(SF::Sprite, Bool))
     @prev_pos : Tuple(Int32, Int32)
     @mouse_pos : Tuple(Int32, Int32)
 
+    @has_reset : Bool
+
     def initialize
       @items = [] of Tuple(SF::Sprite, Bool)
       @prev_pos = POS_NIL
       @mouse_pos = POS_NIL
+      @has_reset = false
     end
 
     def add_item(item : SF::Sprite, locked : Bool = false)
@@ -33,6 +35,8 @@ module Mirrors
     end
 
     def listen(pos : Tuple(Int32, Int32))
+      @has_reset = false
+
       @items.each do |item|
         next if item[1] || !item[0].in_bounds?(pos)
 
@@ -49,6 +53,8 @@ module Mirrors
     end
 
     def reset
+      @has_reset = true
+      
       @items.map { |item| item[0] }.each do |item|
         next unless item.in_bounds?(@mouse_pos)
         item.run if item.is_a?(Button) && @prev_pos == POS_NIL

@@ -10,6 +10,14 @@ module Mirrors
       @texture = SF::RenderTexture.new(800, 600)
     end
 
-    abstract def draw : SF::Texture
+    abstract def draw
+
+    def screen : SF::Texture
+      @texture.clear
+      draw
+      @texture.display
+
+      return @texture.texture
+    end
   end
 end

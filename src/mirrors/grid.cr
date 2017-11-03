@@ -8,7 +8,7 @@ module Mirrors
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
-    @inventory : Array(Item)
+    @inventory : Array(Tuple(Item, Tuple(Int32, Int32)))
     @light : Light
 
     def initialize(@light, @inventory, @tile_grid, @specials_grid); end
@@ -45,34 +45,24 @@ module Mirrors
       return !(0 <= coords[0] < width && 0 <= coords[1] < height)
     end
 
-    # Prompts the user to place an item down
-    private def place_items
-      loop do
-        puts "Your current item is: #{@inventory[0]}"
-        print "Where are you going to place your item? "
-        input = gets.not_nil!.chomp
-
-        break if input == ""
-
-        input = input.split(" ").map(&.to_i)
-
-        @specials_grid[input[0]][input[1]] = @inventory[0]
-        @inventory = @inventory[1..-1]
-
-        break if @inventory.size.zero?
-      end
+    # Place an item into the inventory
+    def place_item(index : Int32, x : Int32, y : Int32)
+      raise ArgumentError.new("Index out of bounds") if index >= @inventory.size
+      @inventory[index] = {@inventory[index][0], {x, y}}
     end
 
-    def place_item(index : Int32, x : Int32, y : Int32)
-      raise ArgumentError.new("Index out of bounds") if index >= @inventory[index]
-      @specials_grid[x][y] = @inventory[index]
-      @inventory.delete_at(index)
+    private def place_items
+      @inventory.each do |tup|
+        item = tup[0]
+        pos = tup[1]
+
+        @specials_grid[pos[0]][pos[1]] = item unless pos == {-1, -1}
+      end
     end
 
     # The main simulator for Mirrors.
     def play
       place_items
-
       success = false
       pp @specials_grid
 
