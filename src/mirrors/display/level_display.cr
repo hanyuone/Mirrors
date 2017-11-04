@@ -54,7 +54,12 @@ module Mirrors
       button_texture.display
 
       button = Button.new(button_texture.texture, ->() {
-        @grid.play        
+        @grid.place_items
+
+        while @grid.success.nil?
+          @grid.tick
+          sleep 0.5.seconds
+        end
       })
       button.position = {650, 530}
 

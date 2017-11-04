@@ -4,14 +4,18 @@ module Mirrors
   alias Item = Special | Switch
 
   class Grid
-    getter :tile_grid, :specials_grid, :inventory
+    getter :tile_grid, :specials_grid, :inventory, :success
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
     @inventory : Array(Tuple(Item, Tuple(Int32, Int32)))
     @light : Light
 
-    def initialize(@light, @inventory, @tile_grid, @specials_grid); end
+    @success : Bool?
+
+    def initialize(@light, @inventory, @tile_grid, @specials_grid)
+      @success = nil
+    end
 
     # Move the light in a certain direction
     private def move_light
@@ -51,7 +55,7 @@ module Mirrors
       @inventory[index] = {@inventory[index][0], {x, y}}
     end
 
-    private def place_items
+    def place_items
       @inventory.each do |tup|
         item = tup[0]
         pos = tup[1]
@@ -60,58 +64,46 @@ module Mirrors
       end
     end
 
-    # The main simulator for Mirrors.
-    def play
-      place_items
-      success = false
-      pp @specials_grid
+    def tick
+      light_tile
+      
+      # Checks if all the tiles have been lit, if they have
+      # then the level is successfully complete
+      tile_state = @tile_grid
+        .flatten
+        .compact
+        .reduce { |a, b| a && b }
 
-      loop do
-        light_tile
-
-        # Checks if all the tiles have been lit, if they have
-        # then the level is successfully complete
-        tile_state = @tile_grid
-          .flatten
-          .compact
-          .reduce { |a, b| a && b }
-
-        if tile_state
-          success = true
-          break
-        end
-
-        # Checks the item, to see if it's special or not
-        case (item = @specials_grid[@light.coords[0]][@light.coords[1]])
-          # When the item is a special item:
-          when Special
-            # Checks if the light has just been teleported, if it has
-            # then we ignore the portal on that square, since we don't
-            # want the light to bounce back and forth between portals
-            if @light.teleported
-              @light.teleported = false
-            else
-              item.apply(@light)
-              next if item.is_a?(Teleporter)
-            end
-          # When the item is a switch:
-          when Switch
-            # Change the state of all items associated with the switch
-            item.items.each do |a|
-              item_coords = a[0]
-              @specials_grid[item_coords[0]][item_coords[1]] = a[1]
-              a = {a[0], a[2], a[1]}
-            end
-        end
-
-        move_light
-
-        if @light.dir == Direction::None || out_of_bounds?(@light.coords)
-          break
-        end
+      if tile_state
+        @success = true
       end
 
-      puts success
+      # Checks the item, to see if it's special or not
+      case (item = @specials_grid[@light.coords[0]][@light.coords[1]])
+        # When the item is a special item:
+        when Special
+          # Checks if the light has just been teleported, if it has
+          # then we ignore the portal on that square, since we don't
+          # want the light to bounce back and forth between portals
+          if @light.teleported
+            @light.teleported = false
+          else
+            item.apply(@light)
+            tick if item.is_a?(Teleporter)
+          end
+        # When the item is a switch:
+        when Switch
+          # Change the state of all items associated with the switch
+          item.items.each do |a|
+            item_coords = a[0]
+            @specials_grid[item_coords[0]][item_coords[1]] = a[1]
+            a = {a[0], a[2], a[1]}
+          end
+      end
+
+      move_light
+
+      @success = false if @light.dir == Direction::None || out_of_bounds?(@light.coords)
     end
   end
 end
