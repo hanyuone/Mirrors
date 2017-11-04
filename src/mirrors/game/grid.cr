@@ -1,4 +1,4 @@
-require "./items/*"
+require "../items/*"
 
 module Mirrors
   alias Item = Special | Switch

@@ -1,9 +1,9 @@
-require "../grid.cr"
+require "../game/grid.cr"
 require "./helpers/display.cr"
 
 module Mirrors
   class LevelDisplay < Display
-    @listener : Listener?
+    @listener : Listener
     @texture : SF::RenderTexture
 
     @dimension : Int32
@@ -20,6 +20,8 @@ module Mirrors
     end
 
     private def add_inventory
+      @dimension = calc_dimensions
+
       @grid.inventory.each do |tup|
         item = tup[0]
 
@@ -37,7 +39,7 @@ module Mirrors
         sprite.position = {620, 20}
 
         @disp_inventory.push(sprite)
-        @listener.try(&.add_item(sprite))
+        @listener.add_item(sprite)
       end
     end
 
@@ -56,20 +58,20 @@ module Mirrors
       })
       button.position = {650, 530}
 
-      @listener.try(&.add_item(button, true))
+      @listener.add_item(button, true)
+    end
+
+    def add_listener
+      add_inventory
+      add_menu
     end
 
     def initialize(@grid)
       super()
 
-      @listener = Listener.new
-      @dimension = 0
-
+      @dimension = calc_dimensions
       @disp_inventory = [] of SF::Sprite
-
-      calc_dimensions
-      add_inventory
-      add_menu
+      add_listener
     end
 
     private def draw_tile(x : Int32, y : Int32)
@@ -159,11 +161,11 @@ module Mirrors
       draw_tiles
       draw_specials
 
-      @listener.not_nil!.items.each do |item|
+      @listener.items.each do |item|
         @texture.draw(item)
       end
 
-      lock_inventory if @listener.not_nil!.has_reset
+      lock_inventory if @listener.has_reset
     end
   end
 end

@@ -5,14 +5,14 @@ module Mirrors
   class Window
     property :display
     @window : SF::RenderWindow
-    @display : Display?
+    @display : Display
     
-    def initialize
+    def initialize(@display)
       @window = SF::RenderWindow.new(SF::VideoMode.new(800, 600), "Mirrors")
     end
 
     private def display_items
-      sprite = SF::Sprite.new(@display.not_nil!.screen)
+      sprite = SF::Sprite.new(@display.screen)
       sprite.position = {0, 0}
       
       @window.clear
@@ -22,7 +22,7 @@ module Mirrors
 
     private def listen_once
       mouse_pos = SF::Mouse.get_position(@window)
-      @display.try(&.listener).try(&.listen({mouse_pos[0], mouse_pos[1]}))
+      @display.listener.listen({mouse_pos[0], mouse_pos[1]})
     end
 
     private def click_loop
@@ -42,7 +42,7 @@ module Mirrors
               listen_once
               click_loop
               
-              @display.try(&.listener).try(&.reset)
+              @display.listener.reset
           end
         end
 
