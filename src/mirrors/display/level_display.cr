@@ -3,14 +3,27 @@ require "./helpers/display.cr"
 
 module Mirrors
   class LevelDisplay < Display
+    # Default items in Display superclass
     @listener : Listener
     @texture : SF::RenderTexture
 
+    # The size of each individual tile on the grid
     @dimension : Int32
+    # The game grid
     @grid : Grid
 
+    # An array containing references to all of the sprites
+    # inside of the grid
     @disp_inventory : Array(SF::Sprite)
 
+    # Variables for the "delay" mechanic when the grid
+    # "lights up": @running is a flag to check if the grid
+    # has started to run, and @timer is to check if the
+    # timespan for updating (currently 500ms) has passed
+    @running : Bool
+    @timer : SF::Clock
+
+    # Calculates the dimensions of the tiles on the grid
     private def calc_dimensions
       x_amount, y_amount = @grid.tile_grid[0].size, @grid.tile_grid.size
       width = 560 / x_amount
@@ -19,6 +32,9 @@ module Mirrors
       @dimension = [width, height].min
     end
 
+    # Adds all of the tiles on the grid as sprites to the
+    # event listener, as well as @disp_inventory to be used
+    # for later
     private def add_inventory
       @dimension = calc_dimensions
 
@@ -43,6 +59,9 @@ module Mirrors
       end
     end
 
+    # Adds the "menu" to the screen, currently only consists
+    # of run button
+    # TODO: Add an actual menu, and change the name of this function
     private def add_menu
       font = SF::Font.from_file("resources/FiraCode.ttf")
       button_text = SF::Text.new("Run", font)
@@ -55,17 +74,16 @@ module Mirrors
 
       button = Button.new(button_texture.texture, ->() {
         @grid.place_items
+        @running = true
 
-        while @grid.success.nil?
-          @grid.tick
-          sleep 0.5.seconds
-        end
+        return
       })
       button.position = {650, 530}
 
       @listener.add_item(button, true)
     end
 
+    # Calls all functions which add stuff to the event listener
     def add_listener
       add_inventory
       add_menu
@@ -76,6 +94,9 @@ module Mirrors
 
       @dimension = calc_dimensions
       @disp_inventory = [] of SF::Sprite
+
+      @running = false
+      @timer = SF::Clock.new
       add_listener
     end
 
@@ -162,6 +183,11 @@ module Mirrors
       end
     end
 
+    def update_grid
+      @grid.tick
+      @timer.restart
+    end
+
     def draw
       draw_tiles
       draw_specials
@@ -169,6 +195,8 @@ module Mirrors
       @listener.items.each do |item|
         @texture.draw(item)
       end
+
+      update_grid if @running && @timer.elapsed_time.as_milliseconds >= 500
 
       lock_inventory if @listener.has_reset
     end
