@@ -36,9 +36,6 @@ module Mirrors
       # Lights up current tile
       current_tile = @tile_grid[@light.coords[0]][@light.coords[1]]
       @tile_grid[@light.coords[0]][@light.coords[1]] = true if current_tile == false
-
-      pp @light.coords
-      pp @tile_grid
     end
 
     # Calculates if a tile is out-of-bounds or not

@@ -12,11 +12,8 @@ module Mirrors
     end
 
     private def display_items
-      sprite = SF::Sprite.new(@display.screen)
-      sprite.position = {0, 0}
-      
       @window.clear
-      @window.draw(sprite)
+      @window.draw(@display.screen)
       @window.display
     end
 
