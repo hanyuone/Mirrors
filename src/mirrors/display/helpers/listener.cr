@@ -36,9 +36,13 @@ module Mirrors
 
     def listen(pos : Tuple(Int32, Int32))
       @has_reset = false
+      clicked_item = -1
 
-      @items.each do |item|
+      (0...@items.size).each do |a|
+        item = @items[a]
         next if item[1] || !item[0].in_bounds?(pos)
+
+        clicked_item = a
 
         if @mouse_pos != POS_NIL
           current_pos = item[0].position
@@ -47,6 +51,9 @@ module Mirrors
 
         break
       end
+
+      cloned_item = @items.delete_at(clicked_item)
+      @items.unshift(cloned_item)
 
       @prev_pos = @mouse_pos
       @mouse_pos = pos
@@ -66,7 +73,7 @@ module Mirrors
     end
 
     def items
-      return @items.map { |item| item[0] }
+      return @items.map { |item| item[0] }.reverse
     end
   end
 end
