@@ -9,6 +9,7 @@ module Mirrors
     
     def initialize(@display)
       @window = SF::RenderWindow.new(SF::VideoMode.new(800, 600), "Mirrors")
+      @window.vertical_sync_enabled = true
     end
 
     private def display_items
