@@ -1,8 +1,6 @@
 require "./direction.cr"
 
 module Mirrors
-  alias Coords = Tuple(Int32, Int32)
-
   abstract class Special
     abstract def apply(light : Light)
   end
@@ -56,6 +54,27 @@ module Mirrors
 
     def apply(light : Light)
       light.dir = Direction::None
+    end
+  end
+
+  # One-way tiles
+  class HorizontalOnly < Special
+    def initialize; end
+
+    def apply(light : Light)
+      if light.dir.is_a?(Direction::Up | Direction::Down)
+        light.dir = Direction::None
+      end
+    end
+  end
+
+  class VerticalOnly < Special
+    def initialize; end
+
+    def apply(light : Light)
+      if light.dir.is_a?(Direction::Left | Direction::Right)
+        light.dir = Direction::None
+      end
     end
   end
 

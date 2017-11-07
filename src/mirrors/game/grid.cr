@@ -1,20 +1,25 @@
 require "../items/*"
 
 module Mirrors
-  alias Item = Special | Switch
-
   class Grid
     getter :tile_grid, :specials_grid, :inventory, :success
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
-    @inventory : Array(Tuple(Item, Tuple(Int32, Int32)))
+    @inventory : Array(Tuple(Item, Coords))
     @light : Light
+
+    @dimensions = Dimensions
 
     @success : Bool?
 
     def initialize(@light, @inventory, @tile_grid, @specials_grid)
+      @dimensions = {@tile_grid[0].size, @tile_grid.size}.as(Dimensions)
       @success = nil
+    end
+
+    def dimensions
+      return @dimensions.as(Tuple(Int32, Int32))
     end
 
     # Move the light in a certain direction

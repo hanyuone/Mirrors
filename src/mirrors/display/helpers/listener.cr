@@ -2,7 +2,7 @@
 # is inside the sprite itself
 module SF
   class Sprite
-    def in_bounds?(pos : Tuple(Int32, Int32)) : Bool
+    def in_bounds?(pos : Coords) : Bool
       bounds = self.global_bounds
       in_width = bounds.left < pos[0] < bounds.left + bounds.width
       in_height = bounds.top < pos[1] < bounds.top + bounds.height
@@ -28,9 +28,9 @@ module Mirrors
     # they're "locked" in that position or not
     @items : Array(Tuple(SF::Sprite, Bool))
     # The previous position the mouse has been in
-    @prev_pos : Tuple(Int32, Int32)
+    @prev_pos : Coords
     # The current position the mouse is in
-    @mouse_pos : Tuple(Int32, Int32)
+    @mouse_pos : Coords
 
     # A flag for if the listener was just reset
     @has_reset : Bool
@@ -51,7 +51,7 @@ module Mirrors
 
     # A function which takes a position as a coordinate (from
     # a mouse click), and moves items/activates buttons accordingly
-    def listen(pos : Tuple(Int32, Int32))
+    def listen(pos : Coords)
       # Once the first "listen" loop is set, the listener is no longer
       # recently reset, therefore we set it to false
       @has_reset = false

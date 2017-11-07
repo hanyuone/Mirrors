@@ -14,5 +14,11 @@ module Mirrors
 
     def draw
     end
+
+    def screen
+      @texture.clear(SF::Color.new(0, 0, 0, 150))
+      draw
+      @texture.display
+    end
   end
 end

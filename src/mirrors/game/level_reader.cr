@@ -10,7 +10,7 @@ module Mirrors
   }
 
   # :nodoc:
-  class Array2D(T)
+  private class Array2D(T)
     getter :arr
 
     @width : Int32
