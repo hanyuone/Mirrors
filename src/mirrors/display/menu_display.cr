@@ -1,3 +1,4 @@
+require "crsfml"
 require "./helpers/display.cr"
 
 module Mirrors
@@ -9,10 +10,11 @@ module Mirrors
     end
 
     def initialize
-      super()
+      super
     end
 
     def draw
+      super
     end
 
     def screen

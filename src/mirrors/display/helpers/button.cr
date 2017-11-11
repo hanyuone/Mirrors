@@ -1,3 +1,5 @@
+require "crsfml"
+
 module Mirrors
   class Button < SF::Sprite
     @fn : Proc(Nil)

@@ -1,4 +1,6 @@
+require "crsfml"
 require "../alias.cr"
+require "../items/*"
 require "../game/grid.cr"
 require "./helpers/display.cr"
 
@@ -205,14 +207,16 @@ module Mirrors
           (pos[1] + @dimension - 80) % @dimension
         }
 
-        next unless ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) && ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
+        next unless ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) &&
+          ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
 
         grid_coords = {
           ((pos[0] - 20.0) / @dimension).round.to_i32,
           ((pos[1] - 80.0) / @dimension).round.to_i32
         }
 
-        next unless (0 <= grid_coords[0] < @grid.dimensions[0]) && (0 <= grid_coords[1] < @grid.dimensions[1])
+        next unless (0 <= grid_coords[0] < @grid.dimensions[0]) &&
+          (0 <= grid_coords[1] < @grid.dimensions[1])
 
         sprite.position = {
           (grid_coords[0] * @dimension) + 20,
@@ -231,12 +235,10 @@ module Mirrors
 
     # Draw everything onto @texture
     def draw
+      super
+
       draw_tiles
       draw_specials
-
-      @listener.items.each do |item|
-        @texture.draw(item)
-      end
 
       update_grid if @grid.success.nil? && @running && @timer.elapsed_time.as_milliseconds >= 500
 

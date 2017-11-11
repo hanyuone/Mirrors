@@ -1,4 +1,6 @@
 require "json"
+require "../alias.cr"
+require "../items/*"
 require "./grid.cr"
 
 module Mirrors

@@ -1,3 +1,6 @@
+require "crsfml"
+require "../../alias.cr"
+
 # Extension of SF::Sprite, to check if a certain position
 # is inside the sprite itself
 module SF

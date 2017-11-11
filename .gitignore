@@ -1,6 +1,7 @@
 /doc/
 /lib/
-/bin/
+/dylib/
 /.vscode/
 /.editorconfig
 /build.sh
+/mirrors

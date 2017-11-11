@@ -1,3 +1,4 @@
+require "crsfml"
 require "./listener.cr"
 
 module Mirrors
@@ -19,7 +20,11 @@ module Mirrors
 
     # Draws everything to @texture - sprites, buttons, rectangles,
     # everything.
-    abstract def draw
+    def draw
+      @listener.items.each do |item|
+        @texture.draw(item)
+      end
+    end
 
     # Gets the actual screen of @texture.
     def screen : SF::Sprite

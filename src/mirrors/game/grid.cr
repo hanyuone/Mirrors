@@ -1,3 +1,4 @@
+require "../alias.cr"
 require "../items/*"
 
 module Mirrors

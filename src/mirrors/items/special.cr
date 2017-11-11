@@ -1,3 +1,4 @@
+require "../alias.cr"
 require "./direction.cr"
 
 module Mirrors
