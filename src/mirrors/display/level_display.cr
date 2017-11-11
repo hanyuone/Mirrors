@@ -8,7 +8,7 @@ module SF
       bounds = self.global_bounds
 
       centre = {position[0] + (dimensions[0] / 2), position[1] + (dimensions[1] / 2)}
-      self.position = {centre[0] - (bounds.width / 2), centre[1] - (bounds.height / 2)}
+      self.position = {centre[0] - (0.9 * self.character_size), centre[1] - bounds.height}
     end
   end
 end
@@ -194,8 +194,6 @@ module Mirrors
     # "Latches" an item from the inventory onto a certain tile -
     # if an item being dragged is 25 pixels within a tile, it will
     # adjust to the coords of that tile.
-    # FIXME: Noticed it does this for places that are outside of the
-    # actual grid, fix that
     private def lock_inventory
       (0...@disp_inventory.size).each do |a|
         sprite = @disp_inventory[a]
@@ -207,14 +205,14 @@ module Mirrors
           (pos[1] + @dimension - 80) % @dimension
         }
 
-        return unless ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) && ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
-        
+        next unless ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) && ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
+
         grid_coords = {
           ((pos[0] - 20.0) / @dimension).round.to_i32,
           ((pos[1] - 80.0) / @dimension).round.to_i32
         }
-        
-        return unless (0 < grid_coords[0] < @grid.dimensions[0]) && (0 < grid_coords[1] < @grid.dimensions[1])
+
+        next unless (0 <= grid_coords[0] < @grid.dimensions[0]) && (0 <= grid_coords[1] < @grid.dimensions[1])
 
         sprite.position = {
           (grid_coords[0] * @dimension) + 20,
