@@ -14,7 +14,7 @@ module Mirrors
     end
 
     def draw
-      super
+      draw_listener
     end
 
     def screen

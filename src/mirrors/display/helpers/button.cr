@@ -1,4 +1,5 @@
 require "crsfml"
+require "./sf_extensions.cr"
 
 module Mirrors
   class Button < SF::Sprite

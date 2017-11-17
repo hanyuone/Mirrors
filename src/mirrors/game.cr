@@ -1,17 +1,68 @@
-module Mirrors
-  class Game
-    @current_display : Display
-    @window : Window
+require "crsfml"
+require "./display/helpers/display.cr"
 
+module Mirrors
+  # The main window class.
+  class Game
+    property :display
+    # The window where the display is going to be drawn
+    @window : SF::RenderWindow
+    # The display with the relevant content on it
+    @display : Display
+    
+    # Initialise function
     def initialize
-      grid = Mirrors::LevelReader.parse("resources/level1.json")
-      @current_display = Mirrors::LevelDisplay.new(grid)
+      @window = SF::RenderWindow.new(SF::VideoMode.new(800, 600), "Mirrors")
+      @window.vertical_sync_enabled = true
       
-      @window = Mirrors::Window.new(@current_display)
+      @display = StartDisplay.new
+    end
+
+    # Place `@display` on the screen.
+    private def display_items
+      @window.clear
+      @window.draw(@display.screen.not_nil!)
+      @window.display
+    end
+
+    # Run the listener once, and execute any changes.
+    private def listen_once
+      mouse_pos = SF::Mouse.get_position(@window)
+      @display.listener.listen({mouse_pos[0], mouse_pos[1]})
+    end
+
+    # This continues running until the user has released their left mouse button.
+    private def click_loop
+      until (event = @window.poll_event).is_a?(SF::Event::MouseButtonReleased)
+        listen_once if event.is_a?(SF::Event::MouseMoved)
+        display_items
+      end
     end
 
     def run
-      @window.show
+      while @window.open?
+        while (event = @window.poll_event)
+          case event
+            when SF::Event::Closed
+              @window.close
+            when SF::Event::MouseButtonPressed
+              break unless event.button == SF::Mouse::Button::Left
+              listen_once
+              click_loop
+              
+              @display.listener.reset
+            when SF::Event::MouseMoved
+              mouse_pos = SF::Mouse.get_position(@window)
+              @display.listener.listen_hover({mouse_pos[0], mouse_pos[1]})
+          end
+        end
+
+        display_items
+
+        if @display.new_display.is_a?(Display)
+          @display = @display.new_display.not_nil!
+        end
+      end
     end
   end
 end

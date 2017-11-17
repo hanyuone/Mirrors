@@ -3,17 +3,7 @@ require "../alias.cr"
 require "../items/*"
 require "../game/grid.cr"
 require "./helpers/display.cr"
-
-module SF
-  class Text
-    def centre(position : Coords, dimensions : Dimensions)
-      bounds = self.global_bounds
-
-      centre = {position[0] + (dimensions[0] / 2), position[1] + (dimensions[1] / 2)}
-      self.position = {centre[0] - (0.9 * self.character_size), centre[1] - bounds.height}
-    end
-  end
-end
+require "./helpers/sf_extensions.cr"
 
 module Mirrors
   class LevelDisplay < Display
@@ -74,6 +64,9 @@ module Mirrors
       end
     end
 
+    private def redraw_run_button(texture : SF::RenderTexture)
+    end
+
     # Adds the "menu" to the screen, currently only consists
     # of run button
     # TODO: Add an actual menu
@@ -84,6 +77,7 @@ module Mirrors
 
       font = SF::Font.from_file("resources/FiraCode.ttf")
       button_text = SF::Text.new("Run", font)
+      button_text.fill_color = SF::Color.new(100, 100, 100)
       button_text.centre({0, 0}, {100, 40})
 
       border_square = SF::RectangleShape.new({98, 38})
@@ -100,6 +94,23 @@ module Mirrors
 
         return
       })
+
+      button.on_hover do
+        button_text.fill_color = SF::Color::White
+        button_texture.clear(SF::Color::White)
+        button_texture.draw(border_square)
+        button_texture.draw(button_text)
+        button_texture.display
+      end
+
+      button.exit_hover do
+        button_text.fill_color = SF::Color.new(100, 100, 100)
+        button_texture.clear(SF::Color::White)
+        button_texture.draw(border_square)
+        button_texture.draw(button_text)
+        button_texture.display
+      end
+
       button.position = {600, 530}
 
       @listener.add_item(button, true)
@@ -235,10 +246,10 @@ module Mirrors
 
     # Draw everything onto @texture
     def draw
-      super
-
       draw_tiles
       draw_specials
+
+      draw_listener
 
       update_grid if @grid.success.nil? && @running && @timer.elapsed_time.as_milliseconds >= 500
 

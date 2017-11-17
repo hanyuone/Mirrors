@@ -6,11 +6,14 @@ module Mirrors
   # extend
   abstract class Display
     getter :listener
+    property :new_display
     # Each display has both `@listener` and `@texture`, which are
     # the event listener and the actual "screen" onto which everything
     # is drawn respectively
     @listener : Listener
     @texture : SF::RenderTexture
+
+    @new_display : Display?
 
     # Initialise function
     def initialize
@@ -18,13 +21,15 @@ module Mirrors
       @texture = SF::RenderTexture.new(800, 600)
     end
 
-    # Draws everything to @texture - sprites, buttons, rectangles,
-    # everything.
-    def draw
+    def draw_listener
       @listener.items.each do |item|
         @texture.draw(item)
       end
     end
+
+    # Draws everything to @texture - sprites, buttons, rectangles,
+    # everything.
+    abstract def draw
 
     # Gets the actual screen of @texture.
     def screen : SF::Sprite
