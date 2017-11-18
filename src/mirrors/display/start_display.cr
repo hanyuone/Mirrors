@@ -8,11 +8,11 @@ module Mirrors
 
     @new_display : Display?
 
-    private def add_start_buttons
-      font = SF::Font.from_file("resources/FiraCode.ttf")
+    @font = SF::Font.from_file("resources/FiraCode.ttf")
 
-      play_text = SF::Text.new("Play", font)
-      play_text.centre({0, 0}, {200, 40})
+    private def add_start_buttons
+      play_text = SF::Text.new("Play", @font)
+      play_text.centre({100, 20})
       play_text.fill_color = SF::Color.new(100, 100, 100)
 
       play_texture = SF::RenderTexture.new(200, 40)
@@ -52,6 +52,12 @@ module Mirrors
     end
 
     private def draw_logo
+      logo = SF::Text.new("MIRRORS", @font)
+      logo.character_size = 35
+      logo.centre({400, 50})
+      logo.fill_color = SF::Color::White
+
+      @texture.draw(logo)
     end
 
     def draw

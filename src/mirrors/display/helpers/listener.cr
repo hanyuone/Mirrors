@@ -85,7 +85,6 @@ module Mirrors
         run_item = @items
           .map { |item| item[0] }
           .find { |item| item.in_bounds?(@mouse_pos) }
-        puts @mouse_pos
         run_item.run if run_item.is_a?(Button)
       end
 

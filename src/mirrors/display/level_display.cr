@@ -78,7 +78,7 @@ module Mirrors
       font = SF::Font.from_file("resources/FiraCode.ttf")
       button_text = SF::Text.new("Run", font)
       button_text.fill_color = SF::Color.new(100, 100, 100)
-      button_text.centre({0, 0}, {100, 40})
+      button_text.centre({50, 20})
 
       border_square = SF::RectangleShape.new({98, 38})
       border_square.fill_color = SF::Color::Black

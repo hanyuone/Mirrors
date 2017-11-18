@@ -24,11 +24,10 @@ module SF
   end
 
   class Text
-    def centre(position : Coords, dimensions : Dimensions)
+    def centre(position : Coords)
       bounds = self.global_bounds
-
-      centre = {position[0] + (dimensions[0] / 2), position[1] + (dimensions[1] / 2)}
-      self.position = {centre[0] - (0.9 * self.character_size), centre[1] - bounds.height}
+      str_size = self.string.size
+      self.position = {position[0] - (0.9 * self.character_size * (str_size / 2)), position[1] - bounds.height}
     end
   end
 end
