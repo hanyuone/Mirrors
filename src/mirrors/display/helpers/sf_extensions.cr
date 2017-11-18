@@ -25,9 +25,13 @@ module SF
 
   class Text
     def centre(position : Coords)
-      bounds = self.global_bounds
-      str_size = self.string.size
-      self.position = {position[0] - (0.9 * self.character_size * (str_size / 2)), position[1] - bounds.height}
+      width = self.character_size * self.string.size * 7.0_f64 / 12
+      height = self.global_bounds.height
+
+      self.position = {
+        position[0] - (width / 2),
+        position[1] - height
+      }
     end
   end
 end

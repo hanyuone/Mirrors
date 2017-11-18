@@ -53,8 +53,8 @@ module Mirrors
 
     private def draw_logo
       logo = SF::Text.new("MIRRORS", @font)
-      logo.character_size = 35
-      logo.centre({400, 50})
+      logo.character_size = 50
+      logo.centre({400, 80})
       logo.fill_color = SF::Color::White
 
       @texture.draw(logo)
