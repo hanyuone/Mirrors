@@ -9,7 +9,7 @@ module Mirrors
   # - an item being dragged, or
   # - a button being clicked
   class Listener
-    getter :prev_pos, :mouse_pos, :has_reset
+    getter :items, :has_reset
     # A constant signifying an "empty" position
     POS_NIL = {-1, -1}
 
@@ -20,6 +20,9 @@ module Mirrors
     @prev_pos : Coords
     # The current position the mouse is in
     @mouse_pos : Coords
+
+    # Checks for the currently hovered object
+    @current_hover : SF::Sprite?
 
     # A flag for if the listener was just reset
     @has_reset : Bool
@@ -63,15 +66,14 @@ module Mirrors
     end
 
     def listen_hover(pos : Coords)
-      @items.map { |item| item[0] }.each do |item|
-        item.exit_hover_fn.try(&.call)
-      end
+      @current_hover.try(&.exit_hover_fn).try(&.call)
 
       hovered_item = @items.map { |item| item[0] }.find { |item| item.in_bounds?(pos) }
 
       return if hovered_item.nil?
 
       hovered_item.hover_fn.try(&.call)
+      @current_hover = hovered_item.not_nil!
     end
 
     # Resets the listener, i.e. wipes the mouse states and activates

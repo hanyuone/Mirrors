@@ -59,16 +59,16 @@ module Mirrors
     private def self.parse_item(item : JSONHash) : Item?
       item_type = item["type"].as(String)
 
-      case item_type
-        when "N"
-          return nil
-        when "L"
-          return LeftMirror.new
-        when "R"
-          return RightMirror.new
+      return case item_type
+        when "N" then nil
+        when "L" then LeftMirror.new
+        when "R" then RightMirror.new
+        when "H" then HorizontalOnly.new
+        when "V" then VerticalOnly.new
         when "T"
           teleporter_dest = to_coords(item["dest"].as(JSONArray))
-          return Teleporter.new(teleporter_dest)
+          
+          Teleporter.new(teleporter_dest)
         when "S"
           temp = item["items"].as(JSONArray).map(&.as(JSONHash))
           switch_items = [] of Tuple(Coords, Special?, Special?)
@@ -112,7 +112,7 @@ module Mirrors
 
       # Create the tile board for the grid (i.e. the board
       # containing the tiles which need to be lit up)
-      tile_coords = level["tiles"].as_a.map(&.as(JSONArray)).map { |a| to_coords(a) }
+      tile_coords = level["tiles"].as_a.map { |a| to_coords(a.as(JSONArray)) }
       tile_arr = Array2D(Bool).new(width, height)
 
       tile_coords.each do |a|

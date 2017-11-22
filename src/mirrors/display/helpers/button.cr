@@ -5,7 +5,8 @@ module Mirrors
   class Button < SF::Sprite
     @fn : Proc(Nil)
 
-    def initialize(texture : SF::Texture, @fn)
+    def initialize(texture : SF::Texture, &fn : -> Nil)
+      @fn = fn
       super texture
     end
 

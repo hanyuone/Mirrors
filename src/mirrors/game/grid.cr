@@ -3,7 +3,7 @@ require "../items/*"
 
 module Mirrors
   class Grid
-    getter :tile_grid, :specials_grid, :inventory, :success
+    getter :tile_grid, :specials_grid, :inventory, :success, :items_placed
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
@@ -13,6 +13,8 @@ module Mirrors
     @dimensions = Dimensions
 
     @success : Bool?
+
+    @items_placed : Bool = false
 
     def initialize(@light, @inventory, @tile_grid, @specials_grid)
       @dimensions = {@tile_grid[0].size, @tile_grid.size}.as(Dimensions)
@@ -25,17 +27,16 @@ module Mirrors
 
     # Move the light in a certain direction
     private def move_light
-      @light.coords =
-        case @light.dir
-          when Direction::Left
-            {@light.coords[0], @light.coords[1] - 1}
-          when Direction::Right
-            {@light.coords[0], @light.coords[1] + 1}
-          when Direction::Up
-            {@light.coords[0] - 1, @light.coords[1]}
-          when Direction::Down
-            {@light.coords[0] + 1, @light.coords[1]}
-        end.not_nil!
+      @light.coords = case @light.dir
+        when Direction::Left
+          {@light.coords[0], @light.coords[1] - 1}
+        when Direction::Right
+          {@light.coords[0], @light.coords[1] + 1}
+        when Direction::Up
+          {@light.coords[0] - 1, @light.coords[1]}
+        when Direction::Down
+          {@light.coords[0] + 1, @light.coords[1]}
+      end.not_nil!
     end
 
     private def light_tile
@@ -65,6 +66,8 @@ module Mirrors
 
         @specials_grid[pos[0]][pos[1]] = item unless pos == {-1, -1}
       end
+
+      @items_placed = true
     end
 
     def tick
@@ -77,9 +80,7 @@ module Mirrors
         .compact
         .reduce { |a, b| a && b }
 
-      if tile_state
-        @success = true
-      end
+      @success = true if tile_state
 
       # Checks the item, to see if it's special or not
       case (item = @specials_grid[@light.coords[0]][@light.coords[1]])
@@ -92,7 +93,13 @@ module Mirrors
             @light.teleported = false
           else
             item.apply(@light)
-            tick if item.is_a?(Teleporter)
+
+            if item.is_a?(Teleporter)
+              light_tile
+              move_light
+
+              return
+            end
           end
         # When the item is a switch:
         when Switch

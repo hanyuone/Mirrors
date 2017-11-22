@@ -7,10 +7,6 @@ require "./helpers/sf_extensions.cr"
 
 module Mirrors
   class LevelDisplay < Display
-    # Default items in Display superclass
-    @listener : Listener
-    @texture : SF::RenderTexture
-
     # The size of each individual tile on the grid
     @dimension : Int32
     # The game grid
@@ -47,7 +43,7 @@ module Mirrors
         item = tup[0]
 
         texture = SF::RenderTexture.new(@dimension, @dimension)
-        texture.clear
+        texture.clear(SF::Color::Transparent)
         
         square = SF::RectangleShape.new({@dimension, @dimension})
         square.fill_color = decide_colour(item)
@@ -75,7 +71,7 @@ module Mirrors
       button_texture = SF::RenderTexture.new(100, 40)
       button_texture.clear(SF::Color::White)
 
-      font = SF::Font.from_file("resources/FiraCode.ttf")
+      font = SF::Font.from_file("../resources/FiraCode.ttf")
       button_text = SF::Text.new("Run", font)
       button_text.fill_color = SF::Color.new(100, 100, 100)
       button_text.centre({50, 20})
@@ -88,12 +84,10 @@ module Mirrors
       button_texture.draw(button_text)
       button_texture.display
 
-      button = Button.new(button_texture.texture, ->() {
+      button = Button.new(button_texture.texture) do
         @grid.place_items
         @running = true
-
-        return
-      })
+      end
 
       button.on_hover do
         button_text.fill_color = SF::Color::White
@@ -171,7 +165,7 @@ module Mirrors
     # question
     # FIXME: Make this display images instead of colours
     private def decide_colour(item : Item) : SF::Color
-      return case item
+      color = case item
         when LeftMirror then SF::Color::Red
         when RightMirror then SF::Color::Blue
         when Teleporter then SF::Color::Yellow
@@ -179,6 +173,9 @@ module Mirrors
         when VerticalOnly then SF::Color::Magenta
         when Switch then SF::Color::Green
       end.not_nil!
+      
+      color.a = 100
+      return color
     end
 
     # Draws a special tile onto the grid
@@ -186,7 +183,7 @@ module Mirrors
       special = @grid.specials_grid[x][y]
       return if special.nil?
 
-      tile = SF::RectangleShape.new({50, 50})
+      tile = SF::RectangleShape.new({@dimension, @dimension})
       tile.position = {20 + (x * @dimension), 80 + (y * @dimension)}
       tile.fill_color = decide_colour(special)
 
@@ -229,11 +226,20 @@ module Mirrors
         next unless (0 <= grid_coords[0] < @grid.dimensions[0]) &&
           (0 <= grid_coords[1] < @grid.dimensions[1])
 
-        sprite.position = {
-          (grid_coords[0] * @dimension) + 20,
-          (grid_coords[1] * @dimension) + 80
-        }
-        @grid.place_item(a, grid_coords[0], grid_coords[1])
+        temp_inventory = @grid.inventory.dup
+        temp_inventory.delete_at(a)
+
+        if temp_inventory.find { |item| item[1] == grid_coords }.nil? &&
+          @grid.specials_grid[grid_coords[0]][grid_coords[1]].nil?
+          sprite.position = {
+            (grid_coords[0] * @dimension) + 20,
+            (grid_coords[1] * @dimension) + 80
+          }
+          @grid.place_item(a, grid_coords[0], grid_coords[1])
+        elsif !@grid.items_placed
+          sprite.position = {540, 20}
+          @grid.place_item(a, -1, -1)
+        end
       end
     end
 
@@ -251,7 +257,9 @@ module Mirrors
 
       draw_listener
 
-      update_grid if @grid.success.nil? && @running && @timer.elapsed_time.as_milliseconds >= 500
+      update_grid if @grid.success.nil? &&
+        @running &&
+        @timer.elapsed_time.as_milliseconds >= 500
 
       lock_inventory if @listener.has_reset
     end

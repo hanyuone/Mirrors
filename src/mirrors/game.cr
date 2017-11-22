@@ -4,7 +4,6 @@ require "./display/helpers/display.cr"
 module Mirrors
   # The main window class.
   class Game
-    property :display
     # The window where the display is going to be drawn
     @window : SF::RenderWindow
     # The display with the relevant content on it

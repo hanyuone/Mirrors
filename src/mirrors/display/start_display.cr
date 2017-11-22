@@ -3,12 +3,7 @@ require "./helpers/display.cr"
 
 module Mirrors
   class StartDisplay < Display
-    @listener : Listener
-    @texture : SF::RenderTexture
-
-    @new_display : Display?
-
-    @font = SF::Font.from_file("resources/FiraCode.ttf")
+    @font = SF::Font.from_file("../resources/FiraCode.ttf")
 
     private def add_start_buttons
       play_text = SF::Text.new("Play", @font)
@@ -20,12 +15,10 @@ module Mirrors
       play_texture.draw(play_text)
       play_texture.display
 
-      play_button = Button.new(play_texture.texture, ->() {
-        grid = LevelReader.parse("resources/level1.json")
+      play_button = Button.new(play_texture.texture) do
+        grid = LevelReader.parse("../resources/level1.json")
         @new_display = LevelDisplay.new(grid)
-
-        return
-      })
+      end
 
       play_button.on_hover do
         play_text.fill_color = SF::Color::White

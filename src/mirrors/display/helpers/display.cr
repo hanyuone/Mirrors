@@ -5,8 +5,7 @@ module Mirrors
   # An abstract parent class, for which all display "screens"
   # extend
   abstract class Display
-    getter :listener
-    property :new_display
+    getter :listener, :new_display
     # Each display has both `@listener` and `@texture`, which are
     # the event listener and the actual "screen" onto which everything
     # is drawn respectively
