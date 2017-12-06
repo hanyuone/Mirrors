@@ -39,6 +39,7 @@ module Mirrors
 
   # Teleporter
   class Teleporter < Special
+    getter :dest
     @dest : Coords
 
     def initialize(@dest); end

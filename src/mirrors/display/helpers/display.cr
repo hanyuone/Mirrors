@@ -1,28 +1,27 @@
 require "crsfml"
+
 require "./listener.cr"
 
 module Mirrors
-  # An abstract parent class, for which all display "screens"
-  # extend
   abstract class Display
-    getter :listener, :new_display
-    # Each display has both `@listener` and `@texture`, which are
-    # the event listener and the actual "screen" onto which everything
-    # is drawn respectively
+    property :listener
+    getter :texture, :new_display
+    
     @listener : Listener
     @texture : SF::RenderTexture
 
     @new_display : Display?
 
-    # Initialise function
     def initialize
       @listener = Listener.new
       @texture = SF::RenderTexture.new(800, 600)
     end
 
     def draw_listener
-      @listener.items.each do |item|
-        @texture.draw(item)
+      if @listener.items.size > 0
+        @listener.items.map { |tup| tup[0]}.each do |item|
+          @texture.draw(item)
+        end
       end
     end
 

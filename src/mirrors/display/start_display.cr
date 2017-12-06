@@ -1,5 +1,5 @@
 require "crsfml"
-require "./helpers/display.cr"
+require "./helpers/*"
 
 module Mirrors
   class StartDisplay < Display
@@ -15,32 +15,27 @@ module Mirrors
       play_texture.draw(play_text)
       play_texture.display
 
-      play_button = Button.new(play_texture.texture) do
+      hover_text = SF::Text.new("Play", @font)
+      hover_text.centre({100, 20})
+      hover_text.fill_color = SF::Color::White
+
+      hover_texture = SF::RenderTexture.new(200, 40)
+      hover_texture.clear
+      hover_texture.draw(hover_text)
+      hover_texture.display
+
+      play_button = Button.new(play_texture.texture, hover_texture.texture) do
         grid = LevelReader.parse("../resources/level1.json")
         @new_display = LevelDisplay.new(grid)
       end
 
-      play_button.on_hover do
-        play_text.fill_color = SF::Color::White
-        play_texture.clear
-        play_texture.draw(play_text)
-        play_texture.display
-      end
-
-      play_button.exit_hover do
-        play_text.fill_color = SF::Color.new(100, 100, 100)
-        play_texture.clear
-        play_texture.draw(play_text)
-        play_texture.display
-      end
-
       play_button.position = {300, 280}
+
       @listener.add_item(play_button, true)
     end
 
     def initialize
       super
-
       add_start_buttons
     end
 
@@ -55,7 +50,6 @@ module Mirrors
 
     def draw
       draw_listener
-
       draw_logo
     end
   end

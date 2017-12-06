@@ -1,4 +1,5 @@
 require "crsfml"
+
 require "./display/helpers/display.cr"
 
 module Mirrors
@@ -33,6 +34,8 @@ module Mirrors
     # This continues running until the user has released their left mouse button.
     private def click_loop
       until (event = @window.poll_event).is_a?(SF::Event::MouseButtonReleased)
+        next if event.is_a?(Nil)
+
         listen_once if event.is_a?(SF::Event::MouseMoved)
         display_items
       end
@@ -59,7 +62,10 @@ module Mirrors
         display_items
 
         if @display.new_display.is_a?(Display)
-          @display = @display.new_display.not_nil!
+          @display.listener.wipe
+
+          temp = @display.new_display.not_nil!
+          @display = temp
         end
       end
     end

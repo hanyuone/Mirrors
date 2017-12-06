@@ -1,0 +1,11 @@
+{
+  "start": {
+    "coords": [3, 0],
+    "dir": "U"
+  },
+  "width": 4,
+  "height": 4,
+  "tiles": [
+    []
+  ]
+}

@@ -1,17 +1,21 @@
-require "crsfml"
-require "./sf_extensions.cr"
+require "./hover_sprite.cr"
 
 module Mirrors
-  class Button < SF::Sprite
-    @fn : Proc(Nil)
+  class Button < HoverSprite
+    @on_click : Proc(Nil)
 
     def initialize(texture : SF::Texture, &fn : -> Nil)
-      @fn = fn
       super texture
+      @on_click = fn
+    end
+
+    def initialize(texture : SF::Texture, hover_texture : SF::Texture, &fn : -> Nil)
+      super texture, hover_texture
+      @on_click = fn
     end
 
     def run
-      @fn.call
+      @on_click.call
     end
   end
 end

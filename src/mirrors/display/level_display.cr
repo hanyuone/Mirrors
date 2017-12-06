@@ -1,169 +1,20 @@
-require "crsfml"
-require "../alias.cr"
+require "./helpers/*"
+require "../game/*"
 require "../items/*"
-require "../game/grid.cr"
-require "./helpers/display.cr"
-require "./helpers/sf_extensions.cr"
 
 module Mirrors
   class LevelDisplay < Display
-    # The size of each individual tile on the grid
-    @dimension : Int32
-    # The game grid
     @grid : Grid
 
-    # An array containing references to all of the sprites
-    # inside of the grid
-    @disp_inventory : Array(SF::Sprite)
+    @tile_size : Int32
 
-    # Variables for the "delay" mechanic when the grid
-    # "lights up": @running is a flag to check if the grid
-    # has started to run, and @timer is to check if the
-    # timespan for updating (currently 500ms) has passed
-    @running : Bool
-    @timer : SF::Clock
+    private def calc_tile_size
+      width = 500 / @grid.dimensions[0]
+      height = 500 / @grid.dimensions[0]
 
-    # Calculates the dimensions of the tiles on the grid
-    private def calc_dimensions
-      x_amount, y_amount = @grid.tile_grid[0].size, @grid.tile_grid.size
-      width = 500 / x_amount
-      height = 500 / y_amount
-
-      @dimension = [width, height].min
+      return [width, height].min
     end
 
-    # Adds all of the tiles on the grid as sprites to the
-    # event listener, as well as @disp_inventory to be used
-    # for later
-    # FIXME: Change this to an actual inventory
-    private def add_inventory
-      @dimension = calc_dimensions
-
-      @grid.inventory.each do |tup|
-        item = tup[0]
-
-        texture = SF::RenderTexture.new(@dimension, @dimension)
-        texture.clear(SF::Color::Transparent)
-        
-        square = SF::RectangleShape.new({@dimension, @dimension})
-        square.fill_color = decide_colour(item)
-        square.position = {0, 0}
-
-        texture.draw(square)
-        texture.display
-
-        sprite = SF::Sprite.new(texture.texture)
-        sprite.position = {540, 20}
-
-        @disp_inventory.push(sprite)
-        @listener.add_item(sprite)
-      end
-    end
-
-    private def redraw_run_button(texture : SF::RenderTexture)
-    end
-
-    # Adds the "menu" to the screen, currently only consists
-    # of run button
-    # TODO: Add an actual menu
-    # FIXME: change the name of this function
-    private def add_menu
-      button_texture = SF::RenderTexture.new(100, 40)
-      button_texture.clear(SF::Color::White)
-
-      font = SF::Font.from_file("../resources/FiraCode.ttf")
-      button_text = SF::Text.new("Run", font)
-      button_text.fill_color = SF::Color.new(100, 100, 100)
-      button_text.centre({50, 20})
-
-      border_square = SF::RectangleShape.new({98, 38})
-      border_square.fill_color = SF::Color::Black
-      border_square.position = {1, 1}
-
-      button_texture.draw(border_square)
-      button_texture.draw(button_text)
-      button_texture.display
-
-      button = Button.new(button_texture.texture) do
-        @grid.place_items
-        @running = true
-      end
-
-      button.on_hover do
-        button_text.fill_color = SF::Color::White
-        button_texture.clear(SF::Color::White)
-        button_texture.draw(border_square)
-        button_texture.draw(button_text)
-        button_texture.display
-      end
-
-      button.exit_hover do
-        button_text.fill_color = SF::Color.new(100, 100, 100)
-        button_texture.clear(SF::Color::White)
-        button_texture.draw(border_square)
-        button_texture.draw(button_text)
-        button_texture.display
-      end
-
-      button.position = {600, 530}
-
-      @listener.add_item(button, true)
-    end
-
-    # Calls all functions which add stuff to the event listener
-    def add_listener
-      add_inventory
-      add_menu
-    end
-
-    # Initialize function
-    def initialize(@grid)
-      super()
-
-      @dimension = calc_dimensions
-      @disp_inventory = [] of SF::Sprite
-
-      @running = false
-      @timer = SF::Clock.new
-      add_listener
-    end
-
-    # Draw a "tile" (something which is either lit or not)
-    # onto the screen
-    # FIXME: Rename all references of "tile" to something less
-    # confusing, like "floor" or something
-    private def draw_tile(x : Int32, y : Int32)
-      tiles = @grid.tile_grid
-
-      square = SF::RectangleShape.new({@dimension, @dimension})
-      square.position = {20 + (x * @dimension), 80 + (y * @dimension)}
-
-      square.fill_color = case tiles[x][y]
-        when false
-          SF::Color.new(150, 150, 150)
-        when true
-          SF::Color::White
-        else
-          SF::Color.new(50, 50, 50)
-      end
-
-      @texture.draw(square)
-    end
-
-    # Draws all the tiles in the grid
-    private def draw_tiles
-      tiles = @grid.tile_grid
-
-      (0...@grid.dimensions[0]).each do |y|
-        (0...@grid.dimensions[1]).each do |x|
-          draw_tile(x, y)
-        end
-      end
-    end
-
-    # Decide on the colour of the special tile in
-    # question
-    # FIXME: Make this display images instead of colours
     private def decide_colour(item : Item) : SF::Color
       color = case item
         when LeftMirror then SF::Color::Red
@@ -178,90 +29,41 @@ module Mirrors
       return color
     end
 
-    # Draws a special tile onto the grid
-    private def draw_special(x : Int32, y : Int32)
-      special = @grid.specials_grid[x][y]
-      return if special.nil?
+    private def create_sprite(item : Item) : HoverSprite
+      texture = SF::RenderTexture.new(@tile_size, @tile_size)
+      texture.clear(SF::Color::Transparent)
 
-      tile = SF::RectangleShape.new({@dimension, @dimension})
-      tile.position = {20 + (x * @dimension), 80 + (y * @dimension)}
-      tile.fill_color = decide_colour(special)
+      square = SF::RectangleShape.new({@tile_size, @tile_size})
+      square.fill_color = decide_colour(item)
 
-      @texture.draw(tile)
+      texture.draw(square)
+      texture.display
+
+      sprite = HoverSprite.new(texture.texture)
+      sprite.position = {540, 40}
+
+      return sprite
     end
 
-    # Super function to draw all of the special items
-    private def draw_specials
-      specials = @grid.specials_grid
-
-      (0...@grid.dimensions[0]).each do |y|
-        (0...@grid.dimensions[1]).each do |x|
-          draw_special(x, y)
-        end
+    private def add_inventory
+      @grid.inventory.each do |tup|
+        @listener.add_item(create_sprite(tup[0]))
       end
     end
 
-    # "Latches" an item from the inventory onto a certain tile -
-    # if an item being dragged is 25 pixels within a tile, it will
-    # adjust to the coords of that tile.
-    private def lock_inventory
-      (0...@disp_inventory.size).each do |a|
-        sprite = @disp_inventory[a]
-        item = @grid.inventory[a]
-
-        pos = sprite.position
-        close_test = {
-          (pos[0] + @dimension - 20) % @dimension,
-          (pos[1] + @dimension - 80) % @dimension
-        }
-
-        next unless ((close_test[0] < 25) || (close_test[0] > @dimension - 25)) &&
-          ((close_test[1] < 25) || (close_test[1] > @dimension - 25))
-
-        grid_coords = {
-          ((pos[0] - 20.0) / @dimension).round.to_i32,
-          ((pos[1] - 80.0) / @dimension).round.to_i32
-        }
-
-        next unless (0 <= grid_coords[0] < @grid.dimensions[0]) &&
-          (0 <= grid_coords[1] < @grid.dimensions[1])
-
-        temp_inventory = @grid.inventory.dup
-        temp_inventory.delete_at(a)
-
-        if temp_inventory.find { |item| item[1] == grid_coords }.nil? &&
-          @grid.specials_grid[grid_coords[0]][grid_coords[1]].nil?
-          sprite.position = {
-            (grid_coords[0] * @dimension) + 20,
-            (grid_coords[1] * @dimension) + 80
-          }
-          @grid.place_item(a, grid_coords[0], grid_coords[1])
-        elsif !@grid.items_placed
-          sprite.position = {540, 20}
-          @grid.place_item(a, -1, -1)
-        end
-      end
+    private def add_to_listener
+      add_inventory
     end
 
-    # A timer function to update the grid once every
-    # 500 milliseconds (may or may not change)
-    def update_grid
-      @grid.tick
-      @timer.restart
+    def initialize(@grid)
+      super()
+      @tile_size = calc_tile_size
+
+      add_to_listener
     end
 
-    # Draw everything onto @texture
     def draw
-      draw_tiles
-      draw_specials
-
       draw_listener
-
-      update_grid if @grid.success.nil? &&
-        @running &&
-        @timer.elapsed_time.as_milliseconds >= 500
-
-      lock_inventory if @listener.has_reset
     end
   end
 end
