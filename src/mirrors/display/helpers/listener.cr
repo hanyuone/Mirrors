@@ -22,8 +22,10 @@ module Mirrors
       @items = [] of Tuple(HoverSprite, Bool)
     end
 
-    private def move_item(item : HoverSprite)
-      return if @prev_pos = {-1, -1}
+    private def move_item(index : Int32)
+      return if @prev_mouse_pos == {-1, -1}
+
+      item = @items[index][0]
 
       difference = {@mouse_pos[0] - @prev_mouse_pos[0], @mouse_pos[1] - @prev_mouse_pos[1]}
       item.position = {item.position[0] + difference[0], item.position[1] + difference[1]}
@@ -32,20 +34,19 @@ module Mirrors
     def listen(pos : Coords)
       @has_reset = false
 
+      @prev_mouse_pos = @mouse_pos
+      @mouse_pos = pos
+
       clicked_index = @items.index { |tup| tup[0].in_bounds?(pos) }
 
       return if clicked_index.nil?
 
       # Move the item to the dragged place
-      clicked_item = @items[clicked_index][0]
-      move_item(clicked_item)
+      move_item(clicked_index)
 
       # Move the item to the front of the "queue"
       moved_item = @items.delete_at(clicked_index)
       @items.unshift(moved_item)
-
-      @prev_pos = @mouse_pos
-      @mouse_pos = pos
     end
 
     def listen_hover(pos : Coords)
@@ -67,13 +68,13 @@ module Mirrors
     def reset
       @has_reset = true
 
-      if @mouse_pos != {-1, -1} && @prev_pos == {-1, -1}
+      if @mouse_pos != {-1, -1} && @prev_mouse_pos == {-1, -1}
         current_item = @items[0][0]
         current_item.run if current_item.is_a?(Button)
       end
 
       @mouse_pos = {-1, -1}
-      @prev_pos = {-1, -1}
+      @prev_mouse_pos = {-1, -1}
     end
   end
 end
