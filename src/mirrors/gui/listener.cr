@@ -2,7 +2,7 @@ require "./hover_sprite.cr"
 
 module Mirrors
   class Listener
-    getter :items
+    getter :items, :has_reset
     @items : Array(Tuple(HoverSprite, Bool)) = [] of Tuple(HoverSprite, Bool)
 
     @mouse_pos = {-1, -1}
@@ -23,7 +23,7 @@ module Mirrors
     end
 
     private def move_item(index : Int32)
-      return if @prev_mouse_pos == {-1, -1}
+      return if @prev_mouse_pos == {-1, -1} || @items[index][1]
 
       item = @items[index][0]
 

@@ -1,12 +1,13 @@
-require "./helpers/*"
+require "../gui/*"
 require "../game/*"
 require "../items/*"
 
 module Mirrors
   class LevelDisplay < Display
     @grid : Grid
-
     @tile_size : Int32
+
+    @inventory_sprites : Array(HoverSprite) = [] of HoverSprite
 
     private def calc_tile_size
       width = 500 / @grid.dimensions[0]
@@ -47,7 +48,10 @@ module Mirrors
 
     private def add_inventory
       @grid.inventory.each do |tup|
-        @listener.add_item(create_sprite(tup[0]))
+        sprite = create_sprite(tup[0])
+
+        @inventory_sprites.push(sprite)
+        @listener.add_item(sprite)
       end
     end
 
@@ -134,9 +138,51 @@ module Mirrors
       end
     end
 
+    # "Latches" an item from the inventory onto a certain tile -
+    # if an item being dragged is 25 pixels within a tile, it will
+    # adjust to the coords of that tile.
+    private def lock_inventory
+      (0...@inventory_sprites.size).each do |a|
+        sprite = @inventory_sprites[a]
+        item = @grid.inventory[a]
+
+        pos = sprite.position
+
+        position_test = {
+          (pos[0] + @tile_size - 20) % @tile_size,
+          (pos[1] + @tile_size - 80) % @tile_size
+        }
+
+        if (25 < position_test[0] < @tile_size - 25) ||
+          (25 < position_test[1] < @tile_size - 25)
+          sprite.position = {540, 20}
+          next
+        end
+
+        tile_coords = {
+          (pos[0] / @tile_size).round.to_i32,
+          (pos[1] / @tile_size).round.to_i32
+        }
+
+        if (0 <= tile_coords[0] < @grid.dimensions[0]) &&
+          (0 <= tile_coords[1] < @grid.dimensions[1])
+          @grid.place_item(a, tile_coords[0], tile_coords[1])
+          sprite.position = {
+            (tile_coords[0] * @tile_size) + 20,
+            (tile_coords[1] * @tile_size) + 80
+          }
+        else
+          @grid.place_item(a, -1, -1)
+          sprite.position = {540, 40}
+        end
+      end
+    end
+
     def draw
       draw_tiles
       draw_listener
+
+      lock_inventory if @listener.has_reset
     end
   end
 end

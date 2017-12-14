@@ -1,6 +1,6 @@
 require "crsfml"
 
-require "./display/helpers/display.cr"
+require "./gui/display.cr"
 
 module Mirrors
   # The main window class.

@@ -1,5 +1,5 @@
 require "crsfml"
-require "./helpers/*"
+require "../gui/*"
 
 module Mirrors
   class StartDisplay < Display
