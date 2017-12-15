@@ -97,14 +97,20 @@ module Mirrors
       width = level["width"].as_i
       height = level["height"].as_i
 
-      # Create the light
-      light_coords = {
-        level["start"]["coords"][0].as_i.to_i32,
-        level["start"]["coords"][1].as_i.to_i32
-      }
-      light_dir = DIRECTIONS[level["start"]["dir"].as_s]
+      # Create an array of lights
+      lights = [] of Light
+      json_lights = level["lights"].as_a.map(&.as(JSONHash))
 
-      light = Light.new(light_coords, light_dir)
+      # Create the light
+      json_lights.each do |light|
+        light_coords = {
+          light["coords"].as(JSONArray)[0].as(Int64).to_i32,
+          light["coords"].as(JSONArray)[1].as(Int64).to_i32
+        }
+        light_dir = DIRECTIONS[light["dir"].as(String)]
+
+        lights.push(Light.new(light_coords, light_dir))
+      end
 
       # Get the inventory - i.e. what tiles can be placed down
       inventory = level["inventory"].as_a.map(&.as(JSONHash))
@@ -131,7 +137,7 @@ module Mirrors
         item_arr.place_item(parse_item(item), item_coords)
       end
 
-      return Grid.new(light, inventory, tile_arr.arr, item_arr.arr)
+      return Grid.new(lights, inventory, tile_arr.arr, item_arr.arr)
     end
   end
 end

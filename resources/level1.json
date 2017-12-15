@@ -1,8 +1,10 @@
 {
-  "start": {
-    "coords": [2, 0],
-    "dir": "U"
-  },
+  "lights": [
+    {
+      "coords": [2, 0],
+      "dir": "U"
+    }
+  ],
   "width": 3,
   "height": 3,
   "tiles": [

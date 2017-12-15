@@ -25,8 +25,7 @@ module Mirrors
       hover_texture.display
 
       play_button = Button.new(play_texture.texture, hover_texture.texture) do
-        grid = LevelReader.parse("../resources/level1.json")
-        @new_display = LevelDisplay.new(grid)
+        @new_display = LevelDisplay.new(1)
       end
 
       play_button.position = {300, 280}

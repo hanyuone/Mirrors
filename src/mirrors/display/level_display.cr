@@ -4,6 +4,8 @@ require "../items/*"
 
 module Mirrors
   class LevelDisplay < Display
+    @level : Int32
+
     @grid : Grid
     @tile_size : Int32
 
@@ -97,8 +99,10 @@ module Mirrors
       add_run_button
     end
 
-    def initialize(@grid)
+    def initialize(@level : Int32)
       super()
+      @grid = LevelReader.parse("../resources/level#{level}.json")
+
       @timer = SF::Clock.new
       @tile_size = calc_tile_size
 
@@ -204,6 +208,11 @@ module Mirrors
       @timer.restart
     end
 
+    def check_success
+      @new_display = LevelDisplay.new(@level + 1) if @grid.success == true &&
+        @timer.elapsed_time.as_milliseconds >= 1000
+    end
+
     def draw
       draw_tiles
       draw_specials
@@ -213,7 +222,9 @@ module Mirrors
         @running &&
         @timer.elapsed_time.as_milliseconds >= 500
 
-        lock_inventory if @listener.has_reset
+      check_success
+
+      lock_inventory if @listener.has_reset
     end
   end
 end
