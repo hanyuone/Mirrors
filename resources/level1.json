@@ -19,7 +19,7 @@
   ],
   "inventory": [
     {
-      "type": "L"
+      "type": "R"
     }, {
       "type": "T",
       "dest": [0, 0]

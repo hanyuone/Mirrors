@@ -71,6 +71,7 @@ module Mirrors
     end
 
     def tick
+      puts "#{@light.coords}, #{@light.dir}"
       light_tile
       
       # Checks if all the tiles have been lit, if they have
@@ -89,14 +90,14 @@ module Mirrors
           # Checks if the light has just been teleported, if it has
           # then we ignore the portal on that square, since we don't
           # want the light to bounce back and forth between portals
-          if @light.teleported
+          if item.is_a?(Teleporter) && @light.teleported
             @light.teleported = false
           else
             item.apply(@light)
+            puts @light.dir
 
             if item.is_a?(Teleporter)
               light_tile
-              move_light
 
               return
             end

@@ -9,6 +9,8 @@ module Mirrors
 
     @inventory_sprites : Array(HoverSprite) = [] of HoverSprite
 
+    @timer : SF::Clock
+
     private def calc_tile_size
       width = 500 / @grid.dimensions[0]
       height = 500 / @grid.dimensions[0]
@@ -55,39 +57,32 @@ module Mirrors
       end
     end
 
+    private def gen_run_button(hover : Bool) : SF::Texture
+      texture = SF::RenderTexture.new(100, 40)
+      texture.clear(SF::Color::White)
+
+      font = SF::Font.from_file("../resources/FiraCode.ttf")
+      text = SF::Text.new("Run", font)
+      text.fill_color = hover ? SF::Color::White : SF::Color.new(100, 100, 100)
+      text.centre({50, 20})
+
+      border = SF::RectangleShape.new({98, 38})
+      border.fill_color = SF::Color::Black
+      border.position = {1, 1}
+
+      texture.draw(border)
+      texture.draw(text)
+      texture.display
+
+      return texture.texture
+    end
+
     # Adds the "menu" to the screen, currently only consists
     # of run button
     # TODO: Add an actual menu
     # FIXME: change the name of this function
-    private def add_menu
-      button_texture = SF::RenderTexture.new(100, 40)
-      button_texture.clear(SF::Color::White)
-
-      font = SF::Font.from_file("../resources/FiraCode.ttf")
-      button_text = SF::Text.new("Run", font)
-      button_text.fill_color = SF::Color.new(100, 100, 100)
-      button_text.centre({50, 20})
-
-      border_square = SF::RectangleShape.new({98, 38})
-      border_square.fill_color = SF::Color::Black
-      border_square.position = {1, 1}
-
-      button_texture.draw(border_square)
-      button_texture.draw(button_text)
-      button_texture.display
-
-      hover_texture = SF::RenderTexture.new(100, 40)
-      hover_texture.clear(SF::Color::White)
-
-      hover_text = SF::Text.new("Run", font)
-      hover_text.fill_color = SF::Color::White
-      hover_text.centre({50, 20})
-
-      hover_texture.draw(border_square)
-      hover_texture.draw(hover_text)
-      hover_texture.display
-
-      button = Button.new(button_texture.texture, hover_texture.texture) do
+    private def add_run_button
+      button = Button.new(gen_run_button(false), gen_run_button(true)) do
         @grid.place_items
         @running = true
       end
@@ -99,21 +94,45 @@ module Mirrors
 
     private def add_to_listener
       add_inventory
-      add_menu
+      add_run_button
     end
 
     def initialize(@grid)
       super()
+      @timer = SF::Clock.new
       @tile_size = calc_tile_size
 
       add_to_listener
+    end
+
+    # Draws a special tile onto the grid
+    private def draw_special(x : Int32, y : Int32)
+      special = @grid.specials_grid[x][y]
+      return if special.nil?
+
+      tile = SF::RectangleShape.new({@tile_size, @tile_size})
+      tile.position = {20 + (y * @tile_size), 80 + (x * @tile_size)}
+      tile.fill_color = decide_colour(special)
+
+      @texture.draw(tile)
+    end
+
+    # Super function to draw all of the special items
+    private def draw_specials
+      specials = @grid.specials_grid
+
+      (0...@grid.dimensions[0]).each do |x|
+        (0...@grid.dimensions[1]).each do |y|
+          draw_special(x, y)
+        end
+      end
     end
 
     private def draw_tile(x : Int32, y : Int32)
       tiles = @grid.tile_grid
 
       square = SF::RectangleShape.new({@tile_size, @tile_size})
-      square.position = {20 + (x * @tile_size), 80 + (y * @tile_size)}
+      square.position = {20 + (y * @tile_size), 80 + (x * @tile_size)}
 
       square.fill_color = case tiles[x][y]
         when false
@@ -131,8 +150,8 @@ module Mirrors
     private def draw_tiles
       tiles = @grid.tile_grid
 
-      (0...@grid.dimensions[0]).each do |y|
-        (0...@grid.dimensions[1]).each do |x|
+      (0...@grid.dimensions[0]).each do |x|
+        (0...@grid.dimensions[1]).each do |y|
           draw_tile(x, y)
         end
       end
@@ -155,7 +174,7 @@ module Mirrors
 
         if (25 < position_test[0] < @tile_size - 25) ||
           (25 < position_test[1] < @tile_size - 25)
-          sprite.position = {540, 20}
+          sprite.position = {540, 40}
           next
         end
 
@@ -166,7 +185,7 @@ module Mirrors
 
         if (0 <= tile_coords[0] < @grid.dimensions[0]) &&
           (0 <= tile_coords[1] < @grid.dimensions[1])
-          @grid.place_item(a, tile_coords[0], tile_coords[1])
+          @grid.place_item(a, tile_coords[1], tile_coords[0])
           sprite.position = {
             (tile_coords[0] * @tile_size) + 20,
             (tile_coords[1] * @tile_size) + 80
@@ -178,11 +197,23 @@ module Mirrors
       end
     end
 
+    # A timer function to update the grid once every
+    # 500 milliseconds (may or may not change)
+    def update_grid
+      @grid.tick
+      @timer.restart
+    end
+
     def draw
       draw_tiles
+      draw_specials
       draw_listener
 
-      lock_inventory if @listener.has_reset
+      update_grid if @grid.success.nil? &&
+        @running &&
+        @timer.elapsed_time.as_milliseconds >= 500
+
+        lock_inventory if @listener.has_reset
     end
   end
 end

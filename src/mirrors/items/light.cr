@@ -8,10 +8,8 @@ module Mirrors
     @coords : Coords
     @dir : Direction
 
-    @teleported : Bool
+    @teleported : Bool = false
 
-    def initialize(@coords, @dir)
-      @teleported = false
-    end
+    def initialize(@coords, @dir); end
   end
 end
