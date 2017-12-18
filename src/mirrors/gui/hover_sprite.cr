@@ -65,7 +65,7 @@ module Mirrors
       x_range = {@position[0], @position[0] + @texture.size[0]}
       y_range = {@position[1], @position[1] + @texture.size[1]}
 
-      return (x_range[0] <= pos[0] <= x_range[1]) && (y_range[0] <= pos[1] <= y_range[1])
+      return (x_range[0] <= pos[0] < x_range[1]) && (y_range[0] <= pos[1] < y_range[1])
     end
   end
 end

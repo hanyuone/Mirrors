@@ -7,7 +7,7 @@ module Mirrors
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
-    @inventory : Array(Tuple(Item, Coords))
+    @inventory : Array(Tuple(Item, Tuple(Int32, Int32)))
     @lights : Array(Light)
 
     @dimensions = Dimensions
@@ -44,8 +44,10 @@ module Mirrors
     # Lights up current tile
     private def light_tile
       @lights.each do |light|
-        current_tile = @tile_grid[light.coords[0]][light.coords[1]]
-        @tile_grid[light.coords[0]][light.coords[1]] = true if current_tile == false
+        if (coords = light.coords)
+          current_tile = @tile_grid[light.coords[0]][light.coords[1]]
+          @tile_grid[light.coords[0]][light.coords[1]] = true if current_tile == false
+        end
       end
     end
 
@@ -68,7 +70,7 @@ module Mirrors
         item = tup[0]
         pos = tup[1]
 
-        @specials_grid[pos[0]][pos[1]] = item unless pos == {-1, -1}
+        @specials_grid[pos[0]][pos[1]] = item unless pos.nil?
       end
 
       @items_placed = true

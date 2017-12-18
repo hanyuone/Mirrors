@@ -5,10 +5,10 @@ module Mirrors
     getter :items, :has_reset
     @items : Array(Tuple(HoverSprite, Bool)) = [] of Tuple(HoverSprite, Bool)
 
-    @mouse_pos = {-1, -1}
-    @prev_mouse_pos = {-1, -1}
+    @mouse_pos : Coords = nil
+    @prev_mouse_pos : Coords = nil
 
-    @hovered_index = -1
+    @hovered_index : Int32? = nil
 
     @has_reset = false
 
@@ -23,11 +23,16 @@ module Mirrors
     end
 
     private def move_item(index : Int32)
-      return if @prev_mouse_pos == {-1, -1} || @items[index][1]
+      return if @prev_mouse_pos.nil? || @items[index][1]
 
       item = @items[index][0]
 
-      difference = {@mouse_pos[0] - @prev_mouse_pos[0], @mouse_pos[1] - @prev_mouse_pos[1]}
+      if (mouse_pos = @mouse_pos) && (prev_mouse_pos = @prev_mouse_pos)
+        difference = {mouse_pos[0] - prev_mouse_pos[0], mouse_pos[1] - prev_mouse_pos[1]}
+      else
+        return
+      end
+      
       item.position = {item.position[0] + difference[0], item.position[1] + difference[1]}
     end
 
@@ -53,10 +58,12 @@ module Mirrors
       hover_index = @items.index { |tup| tup[0].in_bounds?(pos) }
       return if @hovered_index == hover_index
 
-      @items[@hovered_index][0].exited unless @hovered_index == -1
+      if (hovered_index = @hovered_index)
+        @items[hovered_index][0].exited
+      end
 
       if hover_index.nil?
-        @hovered_index = -1
+        @hovered_index = nil
         return
       end
 
@@ -68,13 +75,13 @@ module Mirrors
     def reset
       @has_reset = true
 
-      if @mouse_pos != {-1, -1} && @prev_mouse_pos == {-1, -1}
+      if !@mouse_pos.nil? && @prev_mouse_pos.nil?
         current_item = @items[0][0]
         current_item.run if current_item.is_a?(Button)
       end
 
-      @mouse_pos = {-1, -1}
-      @prev_mouse_pos = {-1, -1}
+      @mouse_pos = nil
+      @prev_mouse_pos = nil
     end
   end
 end

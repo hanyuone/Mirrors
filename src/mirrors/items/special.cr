@@ -8,45 +8,47 @@ module Mirrors
 
   # Left and right mirrors
   class LeftMirror < Special
+    CHANGE_DIRS = {
+      Direction::Left => Direction::Down,
+      Direction::Right => Direction::Up,
+      Direction::Up => Direction::Right,
+      Direction::Down => Direction::Left
+    }
+
     def initialize; end
     
     def apply(light : Light)
-      change_dirs = {
-        Direction::Left => Direction::Down,
-        Direction::Right => Direction::Up,
-        Direction::Up => Direction::Right,
-        Direction::Down => Direction::Left
-      }
-
-      light.dir = change_dirs[light.dir]
+      light.dir = CHANGE_DIRS[light.dir]
     end
   end
 
   class RightMirror < Special
+    CHANGE_DIRS = {
+      Direction::Left => Direction::Up,
+      Direction::Right => Direction::Down,
+      Direction::Up => Direction::Left,
+      Direction::Down => Direction::Right
+    }
     def initialize; end
 
     def apply(light : Light)
-      change_dirs = {
-        Direction::Left => Direction::Up,
-        Direction::Right => Direction::Down,
-        Direction::Up => Direction::Left,
-        Direction::Down => Direction::Right
-      }
-
-      light.dir = change_dirs[light.dir]
+      light.dir = CHANGE_DIRS[light.dir]
     end
   end
 
   # Teleporter
   class Teleporter < Special
     getter :dest
+
     @dest : Coords
 
     def initialize(@dest); end
 
     def apply(light : Light)
-      light.coords = @dest
-      light.teleported = true
+      if (dest = @dest)
+        light.coords = dest
+        light.teleported = true
+      end
     end
   end
 
@@ -84,7 +86,7 @@ module Mirrors
   # one of two states each.
   class Switch
     property :items
-    @items : Array(Tuple(Coords, Special?, Special?))
+    @items : Array(Tuple(Tuple(Int32, Int32), Special?, Special?))
 
     def initialize(@items); end
   end

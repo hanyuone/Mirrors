@@ -50,7 +50,7 @@ module Mirrors
 
     # Converts an array containing two integers (as JSON::Type)
     # into a tuple, which the `Grid` class can use
-    private def self.to_coords(arr : JSONArray) : Coords
+    private def self.to_coords(arr : JSONArray) : Tuple(Int32, Int32)
       return {arr[0].as(Int64).to_i32, arr[1].as(Int64).to_i32}
     end
 
@@ -71,7 +71,7 @@ module Mirrors
           Teleporter.new(teleporter_dest)
         when "S"
           temp = item["items"].as(JSONArray).map(&.as(JSONHash))
-          switch_items = [] of Tuple(Coords, Special?, Special?)
+          switch_items = [] of Tuple(Tuple(Int32, Int32), Special?, Special?)
 
           temp.each do |switch|
             coords = to_coords(switch["dest"].as(JSONArray))
