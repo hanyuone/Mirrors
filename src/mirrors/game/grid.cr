@@ -7,7 +7,7 @@ module Mirrors
     
     @tile_grid : Array(Array(Bool?))
     @specials_grid : Array(Array(Item?))
-    @inventory : Array(Tuple(Item, Tuple(Int32, Int32)))
+    @inventory : Array(Tuple(Item, Coords))
     @lights : Array(Light)
 
     @dimensions = Dimensions
@@ -62,6 +62,7 @@ module Mirrors
     # Place an item into the inventory
     def place_item(index : Int32, x : Int32, y : Int32)
       raise ArgumentError.new("Index out of bounds") if index >= @inventory.size
+      @inventory[index][0].coords = {x, y}
       @inventory[index] = {@inventory[index][0], {x, y}}
     end
 
@@ -99,22 +100,21 @@ module Mirrors
       @lights.each do |light|
         # Checks the item, to see if it's special or not
         case (item = @specials_grid[light.coords[0]][light.coords[1]])
+          when Teleporter
+            if light.teleported
+              light.teleported = false
+            elsif (dest = item.dest) && @specials_grid[dest[0]][dest[1]].is_a?(Teleporter)
+              item.apply(light)
+              light_tile
+
+              return
+            end
           # When the item is a special item:
           when Special
             # Checks if the light has just been teleported, if it has
             # then we ignore the portal on that square, since we don't
             # want the light to bounce back and forth between portals
-            if item.is_a?(Teleporter) && light.teleported
-              light.teleported = false
-            else
-              item.apply(light)
-
-              if item.is_a?(Teleporter)
-                light_tile
-
-                return
-              end
-            end
+            item.apply(light)
           # When the item is a switch:
           when Switch
             # Change the state of all items associated with the switch

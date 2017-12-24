@@ -82,7 +82,7 @@ module Mirrors
             switch_items.push({coords, current_item, next_item})
           end
 
-          return Switch.new(switch_items)
+          Switch.new(switch_items)
       end
     end
 
@@ -114,7 +114,7 @@ module Mirrors
 
       # Get the inventory - i.e. what tiles can be placed down
       inventory = level["inventory"].as_a.map(&.as(JSONHash))
-      inventory = inventory.map { |a| {parse_item(a).not_nil!, {-1, -1}} }
+      inventory = inventory.map { |a| {parse_item(a).not_nil!, nil.as(Coords)} }
 
       # Create the tile board for the grid (i.e. the board
       # containing the tiles which need to be lit up)

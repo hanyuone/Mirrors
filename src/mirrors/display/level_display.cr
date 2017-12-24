@@ -13,6 +13,8 @@ module Mirrors
 
     @timer : SF::Clock
 
+    @on_hover_sprite : SF::Sprite?
+
     private def calc_tile_size
       width = 500 / @grid.dimensions[0]
       height = 500 / @grid.dimensions[0]
@@ -46,6 +48,40 @@ module Mirrors
 
       sprite = HoverSprite.new(texture.texture)
       sprite.position = {540, 40}
+
+      case item
+        when Teleporter
+          sprite.on_hover do
+            tp_coords = item.as(Teleporter).coords
+            tp_dest = item.as(Teleporter).dest
+
+            if (coords = tp_coords) && (dest = tp_dest)
+              cover = SF::RenderTexture.new(800, 600)
+              cover.clear(SF::Color.new(0, 0, 0, 150))
+
+              coords_square = SF::RectangleShape.new({@tile_size, @tile_size})
+              coords_square.fill_color = SF::Color::Yellow
+              coords_square.position = {20 + (coords[1] * @tile_size), 80 + (coords[0] * @tile_size)}
+
+              dest_square = SF::RectangleShape.new({@tile_size, @tile_size})
+              dest_square.fill_color = SF::Color::Yellow
+              dest_square.position = {20 + (dest[1] * @tile_size), 80 + (dest[0] * @tile_size)}
+
+              cover.draw(coords_square)
+              cover.draw(dest_square)
+              cover.display
+
+              cover_sprite = SF::Sprite.new(cover.texture)
+              cover_sprite.position = {0, 0}
+
+              @on_hover_sprite = cover_sprite
+            end
+          end
+
+          sprite.on_exit do
+            @on_hover_sprite = nil
+          end
+      end
 
       return sprite
     end
@@ -225,6 +261,8 @@ module Mirrors
       check_success
 
       lock_inventory if @listener.has_reset
+
+      @texture.draw(@on_hover_sprite.not_nil!) unless @on_hover_sprite.nil?
     end
   end
 end
