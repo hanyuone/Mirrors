@@ -22,7 +22,7 @@ module Mirrors
       return [width, height].min
     end
 
-    private def decide_colour(item : Item) : SF::Color
+    private def decide_colour(item : Item?) : SF::Color
       color = case item
         when LeftMirror then SF::Color::Red
         when RightMirror then SF::Color::Blue
@@ -30,7 +30,8 @@ module Mirrors
         when HorizontalOnly then SF::Color::Cyan
         when VerticalOnly then SF::Color::Magenta
         when Switch then SF::Color::Green
-      end.not_nil!
+        else SF::Color::Transparent
+      end
       
       color.a = 100
       return color
@@ -76,6 +77,38 @@ module Mirrors
 
               @on_hover_sprite = cover_sprite
             end
+          end
+
+          sprite.on_exit do
+            @on_hover_sprite = nil
+          end
+        when Switch
+          sprite = Button.new(texture.texture) do
+            if (coords = item.coords)
+              @grid.toggle_switch(coords)
+            end
+          end
+
+          sprite.on_hover do
+            targets = item.as(Switch).targets
+
+            cover = SF::RenderTexture.new(800, 600)
+            cover.clear(SF::Color.new(0, 0, 0, 150))
+            
+            targets.each do |target|
+              target_square = SF::RectangleShape.new({@tile_size, @tile_size})
+              target_square.fill_color = decide_colour(target[1])
+              target_square.position = {20 + (target[0][1] * @tile_size), 80 + (target[0][0] * @tile_size)}
+
+              cover.draw(target_square)
+            end
+
+            cover.display
+
+            cover_sprite = SF::Sprite.new(cover.texture)
+            cover_sprite.position = {0, 0}
+
+            @on_hover_sprite = cover_sprite
           end
 
           sprite.on_exit do

@@ -77,6 +77,9 @@ module Mirrors
       @items_placed = true
     end
 
+    def toggle_switch(coords : Tuple(Int32, Int32))
+    end
+
     private def lights_fail? : Bool
       @lights.each do |light|
         return false if light.dir != Direction::None && !out_of_bounds?(light.coords)
@@ -118,7 +121,7 @@ module Mirrors
           # When the item is a switch:
           when Switch
             # Change the state of all items associated with the switch
-            item.items.each do |a|
+            item.targets.each do |a|
               item_coords = a[0]
               @specials_grid[item_coords[0]][item_coords[1]] = a[1]
               a = {a[0], a[2], a[1]}

@@ -89,10 +89,10 @@ module Mirrors
   # Switch - toggles various tiles on the board to
   # one of two states each.
   class Switch
-    property :coords, :items
+    property :coords, :targets
     @coords : Coords
-    @items : Array(Tuple(Tuple(Int32, Int32), Special?, Special?))
+    @targets : Array(Tuple(Tuple(Int32, Int32), Special?, Special?))
 
-    def initialize(@items); end
+    def initialize(@targets); end
   end
 end

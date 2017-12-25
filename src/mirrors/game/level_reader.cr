@@ -60,7 +60,6 @@ module Mirrors
       item_type = item["type"].as(String)
 
       return case item_type
-        when "N" then nil
         when "L" then LeftMirror.new
         when "R" then RightMirror.new
         when "H" then HorizontalOnly.new
@@ -83,7 +82,7 @@ module Mirrors
           end
 
           Switch.new(switch_items)
-      end
+      end.not_nil!
     end
 
     # Parses the given JSON file into a `Grid` (or game level),
@@ -134,7 +133,11 @@ module Mirrors
       items.each do |temp|
         item = temp.as(JSONHash)
         item_coords = to_coords(item["coords"].as(JSONArray))
-        item_arr.place_item(parse_item(item), item_coords)
+
+        parsed_item = parse_item(item)
+        parsed_item.coords = item_coords
+
+        item_arr.place_item(parsed_item, item_coords)
       end
 
       return Grid.new(lights, inventory, tile_arr.arr, item_arr.arr)
