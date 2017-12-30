@@ -63,9 +63,7 @@ module Mirrors
 
         if @display.new_display.is_a?(Display)
           @display.listener.wipe
-
-          temp = @display.new_display.not_nil!
-          @display = temp
+          @display = @display.new_display.not_nil!
         end
       end
     end

@@ -3,18 +3,16 @@ require "../items/*"
 
 module Mirrors
   class Grid
-    getter :tile_grid, :specials_grid, :inventory, :success, :items_placed
-    
-    @tile_grid : Array(Array(Bool?))
-    @specials_grid : Array(Array(Item?))
-    @inventory : Array(Tuple(Item, Coords))
-    @lights : Array(Light)
+    getter tile_grid : Array(Array(Bool?))
+    getter specials_grid : Array(Array(Item?))
+    getter inventory : Array(Item)
+    getter lights : Array(Light)
 
     @dimensions = Dimensions
 
-    @success : Bool?
+    getter success : Bool?
 
-    @items_placed : Bool = false
+    getter items_placed : Bool = false
 
     def initialize(@lights, @inventory, @tile_grid, @specials_grid)
       @dimensions = {@tile_grid[0].size, @tile_grid.size}.as(Dimensions)
@@ -60,24 +58,27 @@ module Mirrors
     end
 
     # Place an item into the inventory
-    def place_item(index : Int32, x : Int32, y : Int32)
-      raise ArgumentError.new("Index out of bounds") if index >= @inventory.size
-      @inventory[index][0].coords = {x, y}
-      @inventory[index] = {@inventory[index][0], {x, y}}
+    def place_item(index : Int32, coords : Coords)
+      @inventory[index].coords = coords
     end
 
     def place_items
-      @inventory.each do |tup|
-        item = tup[0]
-        pos = tup[1]
-
-        @specials_grid[pos[0]][pos[1]] = item unless pos.nil?
+      @inventory.each do |item|
+        pos = item.coords
+        @specials_grid[pos[0]][pos[1]] = item if pos
       end
 
       @items_placed = true
     end
 
-    def toggle_switch(coords : Tuple(Int32, Int32))
+    def toggle_switch(switch : Switch)
+      return if switch.coords.nil?
+
+      switch.targets.each do |target|
+        item_coords = target[0]
+        @specials_grid[item_coords[0]][item_coords[1]] = target[1]
+        target = {target[0], target[2], target[1]}
+      end
     end
 
     private def lights_fail? : Bool
@@ -101,8 +102,9 @@ module Mirrors
       @success = true if tile_state
 
       @lights.each do |light|
+        item = @specials_grid[light.coords[0]][light.coords[1]]
         # Checks the item, to see if it's special or not
-        case (item = @specials_grid[light.coords[0]][light.coords[1]])
+        case item
           when Teleporter
             if light.teleported
               light.teleported = false
@@ -121,10 +123,10 @@ module Mirrors
           # When the item is a switch:
           when Switch
             # Change the state of all items associated with the switch
-            item.targets.each do |a|
-              item_coords = a[0]
-              @specials_grid[item_coords[0]][item_coords[1]] = a[1]
-              a = {a[0], a[2], a[1]}
+            item.targets.each do |target|
+              item_coords = target[0]
+              @specials_grid[item_coords[0]][item_coords[1]] = target[1]
+              target = {target[0], target[2], target[1]}
             end
         end
       end

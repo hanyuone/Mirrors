@@ -37,6 +37,10 @@ module Mirrors
     end
 
     def listen(pos : Coords)
+      if (hovered_index = @hovered_index)
+        @items[hovered_index][0].exited
+      end
+
       @has_reset = false
 
       @prev_mouse_pos = @mouse_pos

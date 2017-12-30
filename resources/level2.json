@@ -1,12 +1,31 @@
 {
   "lights": [
     {
-      "coords": [3, 0],
+      "coords": [2, 0],
       "dir": "U"
     }
   ],
-  "width": 4,
-  "height": 4,
+  "width": 3,
+  "height": 3,
   "tiles": [
+  ],
+  "items": [
+
+  ],
+  "inventory": [
+    {
+      "type": "S",
+      "items": [
+        {
+          "dest": [0, 0],
+          "citem": {
+            "type": "L"
+          },
+          "nitem": {
+            "type": "N"
+          }
+        }
+      ]
+    }
   ]
 }

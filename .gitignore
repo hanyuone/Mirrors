@@ -6,4 +6,4 @@
 /.editorconfig
 /build.sh
 /mirrors
-.DS_Store
+/.DS_Store

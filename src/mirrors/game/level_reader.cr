@@ -60,6 +60,7 @@ module Mirrors
       item_type = item["type"].as(String)
 
       return case item_type
+        when "N" then nil
         when "L" then LeftMirror.new
         when "R" then RightMirror.new
         when "H" then HorizontalOnly.new
@@ -82,7 +83,7 @@ module Mirrors
           end
 
           Switch.new(switch_items)
-      end.not_nil!
+      end
     end
 
     # Parses the given JSON file into a `Grid` (or game level),
@@ -113,7 +114,7 @@ module Mirrors
 
       # Get the inventory - i.e. what tiles can be placed down
       inventory = level["inventory"].as_a.map(&.as(JSONHash))
-      inventory = inventory.map { |a| {parse_item(a).not_nil!, nil.as(Coords)} }
+      inventory = inventory.map { |a| parse_item(a).not_nil! }
 
       # Create the tile board for the grid (i.e. the board
       # containing the tiles which need to be lit up)
@@ -134,10 +135,10 @@ module Mirrors
         item = temp.as(JSONHash)
         item_coords = to_coords(item["coords"].as(JSONArray))
 
-        parsed_item = parse_item(item)
-        parsed_item.coords = item_coords
-
-        item_arr.place_item(parsed_item, item_coords)
+        if parsed_item = parse_item(item)
+          parsed_item.coords = item_coords
+          item_arr.place_item(parsed_item, item_coords)
+        end
       end
 
       return Grid.new(lights, inventory, tile_arr.arr, item_arr.arr)

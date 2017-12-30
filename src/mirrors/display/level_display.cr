@@ -15,6 +15,8 @@ module Mirrors
 
     @on_hover_sprite : SF::Sprite?
 
+    # Calculate the size of a tile on a square grid
+    # TODO: Figure out a good way of displaying large grids
     private def calc_tile_size
       width = 500 / @grid.dimensions[0]
       height = 500 / @grid.dimensions[0]
@@ -22,6 +24,9 @@ module Mirrors
       return [width, height].min
     end
 
+    # Decide the colour tile of a given item
+    # TODO: Change this once proper textures for each of the
+    #       items are created (way down the list)
     private def decide_colour(item : Item?) : SF::Color
       color = case item
         when LeftMirror then SF::Color::Red
@@ -37,6 +42,8 @@ module Mirrors
       return color
     end
 
+    # Create a sprite based on the input of a given item,
+    # includes creating listeners for teleporters and switches
     private def create_sprite(item : Item) : HoverSprite
       texture = SF::RenderTexture.new(@tile_size, @tile_size)
       texture.clear(SF::Color::Transparent)
@@ -84,9 +91,7 @@ module Mirrors
           end
         when Switch
           sprite = Button.new(texture.texture) do
-            if (coords = item.coords)
-              @grid.toggle_switch(coords)
-            end
+            @grid.toggle_switch(item.as(Switch))
           end
 
           sprite.on_hover do
@@ -119,15 +124,18 @@ module Mirrors
       return sprite
     end
 
+    # Add the inventory to @listener
     private def add_inventory
-      @grid.inventory.each do |tup|
-        sprite = create_sprite(tup[0])
+      @grid.inventory.each do |item|
+        sprite = create_sprite(item)
 
         @inventory_sprites.push(sprite)
         @listener.add_item(sprite)
       end
     end
 
+    # Generate the regular/hovered textures for the "Run" button, based on
+    # a boolean
     private def gen_run_button(hover : Bool) : SF::Texture
       texture = SF::RenderTexture.new(100, 40)
       texture.clear(SF::Color::White)
@@ -150,8 +158,6 @@ module Mirrors
 
     # Adds the "menu" to the screen, currently only consists
     # of run button
-    # TODO: Add an actual menu
-    # FIXME: change the name of this function
     private def add_run_button
       button = Button.new(gen_run_button(false), gen_run_button(true)) do
         @grid.place_items
@@ -168,6 +174,7 @@ module Mirrors
       add_run_button
     end
 
+    # Initialization function
     def initialize(@level : Int32)
       super()
       @grid = LevelReader.parse("../resources/level#{level}.json")
@@ -230,6 +237,12 @@ module Mirrors
       end
     end
 
+    private def draw_lights
+      @grid.lights.each do |light|
+
+      end
+    end
+
     # "Latches" an item from the inventory onto a certain tile -
     # if an item being dragged is 25 pixels within a tile, it will
     # adjust to the coords of that tile.
@@ -258,13 +271,13 @@ module Mirrors
 
         if (0 <= tile_coords[0] < @grid.dimensions[0]) &&
           (0 <= tile_coords[1] < @grid.dimensions[1])
-          @grid.place_item(a, tile_coords[1], tile_coords[0])
+          @grid.place_item(a, {tile_coords[1], tile_coords[0]})
           sprite.position = {
             (tile_coords[0] * @tile_size) + 20,
             (tile_coords[1] * @tile_size) + 80
           }
         else
-          @grid.place_item(a, -1, -1)
+          @grid.place_item(a, {-1, -1})
           sprite.position = {540, 40}
         end
       end
@@ -277,21 +290,23 @@ module Mirrors
       @timer.restart
     end
 
-    def check_success
-      @new_display = LevelDisplay.new(@level + 1) if @grid.success == true &&
-        @timer.elapsed_time.as_milliseconds >= 1000
-    end
-
     def draw
       draw_tiles
       draw_specials
       draw_listener
 
-      update_grid if @grid.success.nil? &&
-        @running &&
-        @timer.elapsed_time.as_milliseconds >= 500
+      if @running
+        update_grid if @grid.success.nil? &&
+          @timer.elapsed_time.as_milliseconds >= 500
+      else
+        draw_lights
+      end
 
-      check_success
+      if @grid.success && @timer.elapsed_time.as_milliseconds >= 1000
+        @inventory_sprites = [] of HoverSprite
+        @new_display = LevelDisplay.new(@level + 1)
+        return
+      end
 
       lock_inventory if @listener.has_reset
 
