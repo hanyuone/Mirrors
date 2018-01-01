@@ -35,14 +35,15 @@ module Mirrors
             {light.coords[0] - 1, light.coords[1]}
           when Direction::Down
             {light.coords[0] + 1, light.coords[1]}
-        end.not_nil!
+          else light.coords
+        end
       end
     end
 
     # Lights up current tile
     private def light_tile
       @lights.each do |light|
-        if (coords = light.coords)
+        if coords = light.coords
           current_tile = @tile_grid[light.coords[0]][light.coords[1]]
           @tile_grid[light.coords[0]][light.coords[1]] = true if current_tile == false
         end
@@ -74,10 +75,12 @@ module Mirrors
     def toggle_switch(switch : Switch)
       return if switch.coords.nil?
 
-      switch.targets.each do |target|
+      (0...switch.targets.size).each do |a|
+        target = switch.targets[a]
+
         item_coords = target[0]
         @specials_grid[item_coords[0]][item_coords[1]] = target[1]
-        target = {target[0], target[2], target[1]}
+        switch.targets[a] = {target[0], target[2], target[1]}
       end
     end
 
@@ -102,9 +105,8 @@ module Mirrors
       @success = true if tile_state
 
       @lights.each do |light|
-        item = @specials_grid[light.coords[0]][light.coords[1]]
         # Checks the item, to see if it's special or not
-        case item
+        case item = @specials_grid[light.coords[0]][light.coords[1]]
           when Teleporter
             if light.teleported
               light.teleported = false
@@ -123,11 +125,7 @@ module Mirrors
           # When the item is a switch:
           when Switch
             # Change the state of all items associated with the switch
-            item.targets.each do |target|
-              item_coords = target[0]
-              @specials_grid[item_coords[0]][item_coords[1]] = target[1]
-              target = {target[0], target[2], target[1]}
-            end
+            toggle_switch(item)
         end
       end
 

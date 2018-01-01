@@ -239,7 +239,12 @@ module Mirrors
 
     private def draw_lights
       @grid.lights.each do |light|
+        coords = light.coords
+        
+        circle = SF::CircleShape.new(@tile_size / 4)
+        circle.position = {20 + (coords[1] * @tile_size * 3 / 2), 80 + (coords[0] * @tile_size * 3 / 2)}
 
+        @texture.draw(circle)
       end
     end
 
@@ -295,10 +300,9 @@ module Mirrors
       draw_specials
       draw_listener
 
-      if @running
-        update_grid if @grid.success.nil? &&
-          @timer.elapsed_time.as_milliseconds >= 500
-      else
+      if @running && @grid.success.nil? && @timer.elapsed_time.as_milliseconds >= 500
+        update_grid
+      elsif !@running
         draw_lights
       end
 
