@@ -18,8 +18,8 @@ module Mirrors
     end
 
     def draw_listener
-      if @listener.items.size > 0
-        @listener.items.map { |tup| tup[0]}.each do |item|
+      unless @listener.items.size.zero?
+        @listener.items.map { |tup| tup[0] }.each do |item|
           @texture.draw(item)
         end
       end

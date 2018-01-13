@@ -1,0 +1,36 @@
+{
+  "lights": [
+    {
+      "coords": [0, 0, 16],
+      "dir": "U"
+    }
+  ],
+  "dimensions": [1, 1],
+  "grids": [
+    {
+      "coords": [0, 0],
+      "tiles": [6, 7, 8, 11, 13, 16, 18],
+      "specials": [
+        {
+          "coords": 6,
+          "type": "T",
+          "dest": [0, 0, 18]
+        }
+      ],
+      "exits": {
+        "L": [],
+        "R": [],
+        "U": [],
+        "D": []
+      }
+    }
+  ],
+  "inventory": [
+    {
+      "type": "L"
+    }, {
+      "type": "T",
+      "dest": [0, 0, 6]
+    }
+  ]
+}

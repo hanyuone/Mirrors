@@ -4,6 +4,7 @@ require "../items/*"
 
 module Mirrors
   class LevelDisplay < Display
+    TILE_SIZE = 100
     @level : Int32
 
     @grid : Grid

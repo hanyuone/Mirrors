@@ -5,8 +5,8 @@ module Mirrors
     getter :items, :has_reset
     @items : Array(Tuple(HoverSprite, Bool)) = [] of Tuple(HoverSprite, Bool)
 
-    @mouse_pos : Coords = nil
-    @prev_mouse_pos : Coords = nil
+    @mouse_pos : Coords? = nil
+    @prev_mouse_pos : Coords? = nil
 
     @hovered_index : Int32? = nil
 

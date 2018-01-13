@@ -5,8 +5,8 @@ module Mirrors
   # It can move around depending on its surroundings.
   class Light
     property :dir, :coords, :teleported
-    @coords : Tuple(Int32, Int32)
-    @dir : Direction
+    @coords : LevelCoords
+    @dir : Direction?
 
     @teleported : Bool = false
 

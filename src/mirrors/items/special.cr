@@ -5,7 +5,7 @@ module Mirrors
   abstract class Special
     property :coords
 
-    @coords : Coords = nil
+    @coords : LevelCoords? = nil
 
     abstract def apply(light : Light)
   end
@@ -44,7 +44,7 @@ module Mirrors
   class Teleporter < Special
     getter :dest
 
-    @dest : Tuple(Int32, Int32)
+    @dest : LevelCoords
 
     def initialize(@dest); end
 
@@ -61,7 +61,7 @@ module Mirrors
     def initialize; end
 
     def apply(light : Light)
-      light.dir = Direction::None
+      light.dir = nil
     end
   end
 
@@ -71,7 +71,7 @@ module Mirrors
 
     def apply(light : Light)
       if light.dir.is_a?(Direction::Up | Direction::Down)
-        light.dir = Direction::None
+        light.dir = nil
       end
     end
   end
@@ -81,7 +81,7 @@ module Mirrors
 
     def apply(light : Light)
       if light.dir.is_a?(Direction::Left | Direction::Right)
-        light.dir = Direction::None
+        light.dir = nil
       end
     end
   end
@@ -90,8 +90,8 @@ module Mirrors
   # one of two states each.
   class Switch
     property :coords, :targets
-    @coords : Coords
-    @targets : Array(Tuple(Tuple(Int32, Int32), Special?, Special?))
+    @coords : LevelCoords?
+    @targets : Array(Tuple(LevelCoords, Special?, Special?))
 
     def initialize(@targets); end
   end

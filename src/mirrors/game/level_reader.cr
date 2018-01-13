@@ -50,8 +50,9 @@ module Mirrors
 
     # Converts an array containing two integers (as JSON::Type)
     # into a tuple, which the `Grid` class can use
-    private def self.to_coords(arr : JSONArray) : Tuple(Int32, Int32)
-      return {arr[0].as(Int64).to_i32, arr[1].as(Int64).to_i32}
+    private def self.to_coords(arr : JSONArray) : LevelCoords
+      new_arr = arr.map { |a| a.as(Int64).to_i32 }
+      return Tuple(Int32, Int32, Int32).from(new_arr)
     end
 
     # Parses the JSON format of the item, turning it into
@@ -71,7 +72,7 @@ module Mirrors
           Teleporter.new(teleporter_dest)
         when "S"
           temp = item["items"].as(JSONArray).map(&.as(JSONHash))
-          switch_items = [] of Tuple(Tuple(Int32, Int32), Special?, Special?)
+          switch_items = [] of Tuple(LevelCoords, Special?, Special?)
 
           temp.each do |switch|
             coords = to_coords(switch["dest"].as(JSONArray))
@@ -86,16 +87,61 @@ module Mirrors
       end
     end
 
+    private def self.to_exits(exits : JSONHash) : Hash(Direction, Array(Int32))
+      new_exits = {} of Direction => Array(Int32)
+
+      exits.each do |key, value|
+        new_exits[DIRECTIONS[key.as(String)]] = value.as(JSONArray).map { |a| a.as(Int64).to_i32 }
+      end
+
+      return new_exits
+    end
+
+    private def self.parse_grid(grid : JSONHash) : Tuple(Grid, Coords)
+      coords = grid["coords"].as(JSONArray).map { |a| a.as(Int64).to_i32 }
+      coords = Tuple(Int32, Int32).from(coords)
+
+      # Create the tile board for the grid (i.e. the board
+      # containing the tiles which need to be lit up)
+      tiles = grid["tiles"].as(JSONArray).map { |a| a.as(Int64).to_i32 }
+      tile_arr = [] of Bool?
+      25.times { tile_arr.push(nil) }
+
+      tiles.each { |a| tile_arr[a] = false }
+
+      # Create the special items board for the grid (i.e. the board
+      # containing the items which can manipulate the light
+      # in various ways)
+      specials = grid["specials"].as(JSONArray)
+      specials_arr = [] of Item?
+      25.times { specials_arr.push(nil) }
+
+      specials.each do |temp|
+        special = temp.as(JSONHash)
+        special_coords = to_coords(special["coords"])
+
+        if parsed_item = parse_item(special)
+          parsed_item.coords = special_coords
+          specials_arr[special_coords[2]] = parsed_item
+        end
+      end
+
+      # Create a hash of exit points for the grid
+      exit_points = to_exits(grid["exits"].as(JSONHash))
+
+      return {Grid.new(tile_arr, specials_arr, exit_points), coords}
+    end
+
     # Parses the given JSON file into a `Grid` (or game level),
     # given `filename` as an argument.
-    def self.parse(filename : String) : Grid
+    def self.parse(filename : String) : Level
       # Parse the JSON into `JSON::Any`, which can be manipulated
       # by Crystal
       level = JSON.parse(File.open(filename))
 
       # Get the width and the height of the board
-      width = level["width"].as_i
-      height = level["height"].as_i
+      dimensions = level["dimensions"].as_a.map { |a| a.as(Int64).to_i32 }
+      dimensions = Tuple(Int32, Int32).from(dimensions)
 
       # Create an array of lights
       lights = [] of Light
@@ -103,10 +149,7 @@ module Mirrors
 
       # Create the light
       json_lights.each do |light|
-        light_coords = {
-          light["coords"].as(JSONArray)[0].as(Int64).to_i32,
-          light["coords"].as(JSONArray)[1].as(Int64).to_i32
-        }
+        light_coords = to_coords(light["coords"].as(JSONArray))
         light_dir = DIRECTIONS[light["dir"].as(String)]
 
         lights.push(Light.new(light_coords, light_dir))
@@ -116,32 +159,15 @@ module Mirrors
       inventory = level["inventory"].as_a.map(&.as(JSONHash))
       inventory = inventory.map { |a| parse_item(a).not_nil! }
 
-      # Create the tile board for the grid (i.e. the board
-      # containing the tiles which need to be lit up)
-      tile_coords = level["tiles"].as_a.map { |a| to_coords(a.as(JSONArray)) }
-      tile_arr = Array2D(Bool).new(width, height)
+      json_grids = level["grids"].as_a.map(&.as(JSONHash))
+      grids = Array2D(Grid).new(dimensions[0], dimensions[1])
 
-      tile_coords.each do |a|
-        tile_arr.place_item(false, a)
+      json_grids.each do |temp|
+        grid, coords = parse_grid(temp)
+        grids.place_item(grid, coords)
       end
 
-      # Create the items board for the grid (i.e. the board
-      # containing the items which can manipulate the light
-      # in various ways)
-      items = level["items"].as_a
-      item_arr = Array2D(Item).new(width, height)
-
-      items.each do |temp|
-        item = temp.as(JSONHash)
-        item_coords = to_coords(item["coords"].as(JSONArray))
-
-        if parsed_item = parse_item(item)
-          parsed_item.coords = item_coords
-          item_arr.place_item(parsed_item, item_coords)
-        end
-      end
-
-      return Grid.new(lights, inventory, tile_arr.arr, item_arr.arr)
+      return Level.new(lights, inventory, grids.arr)
     end
   end
 end

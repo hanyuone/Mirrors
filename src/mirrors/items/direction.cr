@@ -3,7 +3,6 @@ module Mirrors
     Left
     Right
     Up
-    Down
-    None  
+    Down 
   end
 end
