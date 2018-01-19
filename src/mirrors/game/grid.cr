@@ -3,8 +3,8 @@ require "../items/*"
 
 module Mirrors
   class Grid
-    getter tile_grid    : Array(Bool?)
-    getter special_grid : Array(Item?)
+    property tile_grid    : Array(Bool?)
+    property special_grid : Array(Item?)
 
     getter exit_points  : Hash(Direction, Array(Int32))
 

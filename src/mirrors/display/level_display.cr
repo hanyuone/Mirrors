@@ -1,41 +1,31 @@
 require "../gui/*"
 require "../game/*"
 require "../items/*"
+require "./tile_size.cr"
 
 module Mirrors
   class LevelDisplay < Display
-    TILE_SIZE = 100
-    @level : Int32
+    @level          : Level
+    @level_number   : Int32
+    @current_grid   : Tuple(Int32, Int32)
+    
+    @running : Bool
 
-    @grid : Grid
-    @tile_size : Int32
-
-    @inventory_sprites : Array(HoverSprite) = [] of HoverSprite
-
-    @timer : SF::Clock
-
-    @on_hover_sprite : SF::Sprite?
-
-    # Calculate the size of a tile on a square grid
-    # TODO: Figure out a good way of displaying large grids
-    private def calc_tile_size
-      width = 500 / @grid.dimensions[0]
-      height = 500 / @grid.dimensions[0]
-
-      return [width, height].min
-    end
+    @inv_sprites  : Array(HoverSprite) = [] of HoverSprite
+    @timer        : SF::Clock
+    @hover_sprite : SF::Sprite?
 
     # Decide the colour tile of a given item
     # TODO: Change this once proper textures for each of the
     #       items are created (way down the list)
-    private def decide_colour(item : Item?) : SF::Color
+    private def sprite_colour(item : Item?) : SF::Color
       color = case item
-        when LeftMirror then SF::Color::Red
-        when RightMirror then SF::Color::Blue
-        when Teleporter then SF::Color::Yellow
+        when LeftMirror     then SF::Color::Red
+        when RightMirror    then SF::Color::Blue
+        when Teleporter     then SF::Color::Yellow
         when HorizontalOnly then SF::Color::Cyan
-        when VerticalOnly then SF::Color::Magenta
-        when Switch then SF::Color::Green
+        when VerticalOnly   then SF::Color::Magenta
+        when Switch         then SF::Color::Green
         else SF::Color::Transparent
       end
       
@@ -43,14 +33,74 @@ module Mirrors
       return color
     end
 
+    # TODO:
+    # - Create a 1100x500 sprite, or 500x1100 sprite based on direction
+    private def animate_grid(dir : Direction)
+      case dir
+        when Direction::Left
+        when Direction::Right
+        when Direction::Up
+        when Direction::Down
+      end
+    end
+
+    private def teleporter_on_hover(item : Teleporter)
+      coords = item.coords
+      dest = item.dest
+
+      return if coords.nil? || dest.nil?
+
+      cover = SF::RenderTexture.new(800, 600)
+      cover.clear(SF::Color.new(0, 0, 0, 150))
+
+      coords_square = SF::RectangleShape.new({@tile_size, @tile_size})
+      coords_square.fill_color = SF::Color::Yellow
+      coords_square.position = {20 + (coords[1] * @tile_size), 80 + (coords[0] * @tile_size)}
+
+      dest_square = SF::RectangleShape.new({@tile_size, @tile_size})
+      dest_square.fill_color = SF::Color::Yellow
+      dest_square.position = {20 + (dest[1] * @tile_size), 80 + (dest[0] * @tile_size)}
+
+      cover.draw(coords_square)
+      cover.draw(dest_square)
+      cover.display
+
+      cover_sprite = SF::Sprite.new(cover.texture)
+      cover_sprite.position = {0, 0}
+
+      @hover_sprite = cover_sprite
+    end
+
+    private def switch_on_hover(item : Switch)
+      targets = item.targets
+
+      cover = SF::RenderTexture.new(800, 600)
+      cover.clear(SF::Color.new(0, 0, 0, 150))
+      
+      targets.each do |target|
+        target_square = SF::RectangleShape.new({TILE_SIZE, TILE_SIZE})
+        target_square.fill_color = decide_colour(target[1])
+        target_square.position = {20 + (target[0][1] * TILE_SIZE), 80 + (target[0][0] * TILE_SIZE)}
+
+        cover.draw(target_square)
+      end
+
+      cover.display
+
+      cover_sprite = SF::Sprite.new(cover.texture)
+      cover_sprite.position = {0, 0}
+
+      @hover_sprite = cover_sprite
+    end
+
     # Create a sprite based on the input of a given item,
     # includes creating listeners for teleporters and switches
     private def create_sprite(item : Item) : HoverSprite
-      texture = SF::RenderTexture.new(@tile_size, @tile_size)
+      texture = SF::RenderTexture.new(TILE_SIZE, TILE_SIZE)
       texture.clear(SF::Color::Transparent)
 
-      square = SF::RectangleShape.new({@tile_size, @tile_size})
-      square.fill_color = decide_colour(item)
+      square = SF::RectangleShape.new({TILE_SIZE, TILE_SIZE})
+      square.fill_color = sprite_colour(item)
 
       texture.draw(square)
       texture.display
@@ -60,66 +110,13 @@ module Mirrors
 
       case item
         when Teleporter
-          sprite.on_hover do
-            tp_coords = item.as(Teleporter).coords
-            tp_dest = item.as(Teleporter).dest
-
-            if (coords = tp_coords) && (dest = tp_dest)
-              cover = SF::RenderTexture.new(800, 600)
-              cover.clear(SF::Color.new(0, 0, 0, 150))
-
-              coords_square = SF::RectangleShape.new({@tile_size, @tile_size})
-              coords_square.fill_color = SF::Color::Yellow
-              coords_square.position = {20 + (coords[1] * @tile_size), 80 + (coords[0] * @tile_size)}
-
-              dest_square = SF::RectangleShape.new({@tile_size, @tile_size})
-              dest_square.fill_color = SF::Color::Yellow
-              dest_square.position = {20 + (dest[1] * @tile_size), 80 + (dest[0] * @tile_size)}
-
-              cover.draw(coords_square)
-              cover.draw(dest_square)
-              cover.display
-
-              cover_sprite = SF::Sprite.new(cover.texture)
-              cover_sprite.position = {0, 0}
-
-              @on_hover_sprite = cover_sprite
-            end
-          end
-
-          sprite.on_exit do
-            @on_hover_sprite = nil
-          end
+          sprite.on_hover { teleporter_on_hover(item.as(Teleporter)) }
+          sprite.on_exit { @hover_sprite = nil }
         when Switch
-          sprite = Button.new(texture.texture) do
-            @grid.toggle_switch(item.as(Switch))
-          end
+          sprite = Button.new(texture.texture) { @level.toggle_switch(item.as(Switch)) }
+          sprite.on_hover { switch_on_hover(item.as(Teleporter)) }
 
-          sprite.on_hover do
-            targets = item.as(Switch).targets
-
-            cover = SF::RenderTexture.new(800, 600)
-            cover.clear(SF::Color.new(0, 0, 0, 150))
-            
-            targets.each do |target|
-              target_square = SF::RectangleShape.new({@tile_size, @tile_size})
-              target_square.fill_color = decide_colour(target[1])
-              target_square.position = {20 + (target[0][1] * @tile_size), 80 + (target[0][0] * @tile_size)}
-
-              cover.draw(target_square)
-            end
-
-            cover.display
-
-            cover_sprite = SF::Sprite.new(cover.texture)
-            cover_sprite.position = {0, 0}
-
-            @on_hover_sprite = cover_sprite
-          end
-
-          sprite.on_exit do
-            @on_hover_sprite = nil
-          end
+          sprite.on_exit { @hover_sprite = nil }
       end
 
       return sprite
@@ -175,147 +172,44 @@ module Mirrors
       add_run_button
     end
 
-    # Initialization function
-    def initialize(@level : Int32)
+    def initialize(@level_number)
       super()
-      @grid = LevelReader.parse("../resources/level#{level}.json")
+      @level = LevelReader.parse("../resources/levels/level#{@level_number}.json")
+      @current_grid = {0, 0}
 
       @timer = SF::Clock.new
-      @tile_size = calc_tile_size
 
       add_to_listener
     end
 
-    # Draws a special tile onto the grid
-    private def draw_special(x : Int32, y : Int32)
-      special = @grid.specials_grid[x][y]
-      return if special.nil?
-
-      tile = SF::RectangleShape.new({@tile_size, @tile_size})
-      tile.position = {20 + (y * @tile_size), 80 + (x * @tile_size)}
-      tile.fill_color = decide_colour(special)
-
-      @texture.draw(tile)
-    end
-
-    # Super function to draw all of the special items
-    private def draw_specials
-      specials = @grid.specials_grid
-
-      (0...@grid.dimensions[0]).each do |x|
-        (0...@grid.dimensions[1]).each do |y|
-          draw_special(x, y)
-        end
-      end
-    end
-
-    private def draw_tile(x : Int32, y : Int32)
-      tiles = @grid.tile_grid
-
-      square = SF::RectangleShape.new({@tile_size, @tile_size})
-      square.position = {20 + (y * @tile_size), 80 + (x * @tile_size)}
-
-      square.fill_color = case tiles[x][y]
-        when false
-          SF::Color.new(150, 150, 150)
-        when true
-          SF::Color::White
-        else
-          SF::Color.new(50, 50, 50)
-      end
-
-      @texture.draw(square)
-    end
-
-    # Draws all the tiles in the grid
-    private def draw_tiles
-      tiles = @grid.tile_grid
-
-      (0...@grid.dimensions[0]).each do |x|
-        (0...@grid.dimensions[1]).each do |y|
-          draw_tile(x, y)
-        end
-      end
-    end
-
-    private def draw_lights
-      @grid.lights.each do |light|
-        coords = light.coords
-        
-        circle = SF::CircleShape.new(@tile_size / 4)
-        circle.position = {20 + (coords[1] * @tile_size * 3 / 2), 80 + (coords[0] * @tile_size * 3 / 2)}
-
-        @texture.draw(circle)
-      end
-    end
-
-    # "Latches" an item from the inventory onto a certain tile -
-    # if an item being dragged is 25 pixels within a tile, it will
-    # adjust to the coords of that tile.
-    private def lock_inventory
-      (0...@inventory_sprites.size).each do |a|
-        sprite = @inventory_sprites[a]
-        item = @grid.inventory[a]
-
-        pos = sprite.position
-
-        position_test = {
-          (pos[0] + @tile_size - 20) % @tile_size,
-          (pos[1] + @tile_size - 80) % @tile_size
-        }
-
-        if (25 < position_test[0] < @tile_size - 25) ||
-          (25 < position_test[1] < @tile_size - 25)
-          sprite.position = {540, 40}
-          next
-        end
-
-        tile_coords = {
-          (pos[0] / @tile_size).round.to_i32,
-          (pos[1] / @tile_size).round.to_i32
-        }
-
-        if (0 <= tile_coords[0] < @grid.dimensions[0]) &&
-          (0 <= tile_coords[1] < @grid.dimensions[1])
-          @grid.place_item(a, {tile_coords[1], tile_coords[0]})
-          sprite.position = {
-            (tile_coords[0] * @tile_size) + 20,
-            (tile_coords[1] * @tile_size) + 80
-          }
-        else
-          @grid.place_item(a, {-1, -1})
-          sprite.position = {540, 40}
-        end
-      end
-    end
-
     # A timer function to update the grid once every
     # 500 milliseconds (may or may not change)
-    def update_grid
-      @grid.tick
+    private def update_grid
+      @level.tick
       @timer.restart
     end
 
     def draw
-      draw_tiles
-      draw_specials
+      draw_grid
       draw_listener
 
-      if @running && @grid.success.nil? && @timer.elapsed_time.as_milliseconds >= 500
+      if @running && @level.success.nil? && @timer.elapsed_time.as_milliseconds >= 500
         update_grid
       elsif !@running
-        draw_lights
+        draw_light
       end
 
-      if @grid.success && @timer.elapsed_time.as_milliseconds >= 1000
-        @inventory_sprites = [] of HoverSprite
+      if @level.success && @timer.elapsed_time.as_milliseconds >= 1000
+        @inv_sprites = [] of HoverSprite
         @new_display = LevelDisplay.new(@level + 1)
         return
       end
 
       lock_inventory if @listener.has_reset
 
-      @texture.draw(@on_hover_sprite.not_nil!) unless @on_hover_sprite.nil?
+      if (sprite = @hover_sprite)
+        @texture.draw(sprite)
+      end
     end
   end
 end

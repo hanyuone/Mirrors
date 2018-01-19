@@ -4,9 +4,9 @@ require "../items/*"
 
 module Mirrors
   class Level
-    getter lights : Array(Light)
+    getter light     : Light
     getter inventory : Array(Item)
-    getter grids  : Array(Array(Grid?))
+    getter grids     : Array(Array(Grid?))
 
     getter dimensions : Dimensions
 
@@ -17,21 +17,25 @@ module Mirrors
       @dimensions = {@grids[0].size, @grids.size}
     end
 
-    private def out_of_bounds?(coords : Coords?) : Bool
-      return if coords.nil?
-      return !(0 <= coords[0] < @dimensions[0] && 0 <= coords[1] < @dimensions[1])
+    private def get_special(coords : LevelCoords) : Item?
+      return @grids[coords[0]][coords[1]].special_grid[coords[2]]
     end
 
-    private def get_special(coords : LevelCoords) : Bool
-      return @grids[coords[0]][coords[1]].specials_grid[coords[2]]
+    private def set_special(coords : LevelCoords, item : Item)
+      @grids[coords[0]][coords[1]].special_grid[coords[2]] = item
     end
 
-    private def lights_fail? : Bool
-      @lights.each do |light|
-        return false if light.dir && !out_of_bounds?(light.coords)
-      end
+    private def get_tile(coords : LevelCoords) : Bool?
+      return @grids[coords[0]][coords[1]].tile_grid[coords[2]]
+    end
 
-      return true
+    private def set_tile(coords : LevelCoords, bool : Bool)
+      @grids[coords[0]][coords[1]].tile_grid[coords[2]] = bool
+    end
+
+    private def light_tile
+      coords = @light.coords
+      set_tile(coords, true) unless get_tile(coords).nil?
     end
 
     private def all_tiles_lit? : Bool
@@ -47,57 +51,53 @@ module Mirrors
       return true
     end
 
-    private def can_exit?(light : Light) : Bool
-      current_grid = @grids[light.coords[0]][light.coords[1]]
-      
-      return current_grid.exit_points[light.dir].contains?(case light.dir
-        when Direction::Left, Direction::Right then light.coords[2] / 5
-        when Direction::Up, Direction::Down then light.coords[2] % 5
-      end)
-    end
-
-    private def move_new_grid(light : Light)
-      light.coords = case light.dir
+    private def light_new_grid
+      @light.coords = case @light.dir
         when Direction::Left
-          {light.coords[0] - 1, light.coords[1], light.coords[2] + 4}
+          {@light.coords[0] - 1, @light.coords[1], @light.coords[2] + 4}
         when Direction::Right
+          {@light.coords[0] + 1, @light.coords[1], @light.coords[2] - 4}
         when Direction::Up
+          {@light.coords[0], @light.coords[1] - 1, @light.coords[2] + 20}
         when Direction::Down
+          {@light.coords[0], @light.coords[1] + 1, @light.coords[2] - 20}
       end
     end
 
-    # Move the light in a certain direction
-    private def move_lights
-      @lights.each do |light|
-        x, y = light.coords[2] / 5, light.coords[2] % 5
-        grid_coords = case light.dir
-          when Direction::Left  then {x, y - 1}
-          when Direction::Right then {x, y + 1}
-          when Direction::Up    then {x - 1, y}
-          when Direction::Down  then {x + 1, y}
-          else {x, y}
-        end
+    private def light_can_exit? : Bool
+      current_grid = @grids[@light.coords[0]][@light.coords[1]]
+      
+      return current_grid.exit_points[@light.dir].contains?(case @light.dir
+        when Direction::Left, Direction::Right then @light.coords[2] / 5
+        when Direction::Up, Direction::Down    then @light.coords[2] % 5
+      end)
+    end
 
-        if (0 <= grid_coords[0] < 5) && (0 <= grid_coords[1] < 5)
-          light.coords = {light.coords[0], light.coords[1], grid_coords[0] * 5 + grid_coords[1]}
-        elsif can_exit?(light)
-          move_new_grid(light)
-        else
-          light.direction = nil
-        end
+    # Move the light in a certain direction
+    private def move_light
+      x, y = @light.coords[2] / 5, @light.coords[2] % 5
+      grid_coords = case @light.dir
+        when Direction::Left  then {x, y - 1}
+        when Direction::Right then {x, y + 1}
+        when Direction::Up    then {x - 1, y}
+        when Direction::Down  then {x + 1, y}
+        else {x, y}
+      end
+
+      if (0 <= grid_coords[0] < 5) && (0 <= grid_coords[1] < 5)
+        @light.coords = {@light.coords[0], @light.coords[1], grid_coords[0] * 5 + grid_coords[1]}
+      elsif light_can_exit?
+        light_new_grid
+      else
+        @light.direction = nil
       end
     end
 
     def toggle_switch(switch : Switch)
       return if switch.coords.nil?
-
-      (0...switch.targets.size).each do |a|
-        target = switch.targets[a]
-
-        item_coords = target[0]
-        @specials_grid[item_coords[0]][item_coords[1]] = target[1]
-        switch.targets[a] = {target[0], target[2], target[1]}
-      end
+      
+      set_special(switch.coords, switch.passive)
+      switch.active, switch.passive = switch.passive, switch.active
     end
 
     def place_item(inv_index : Int32, coords : LevelCoords)
@@ -106,7 +106,7 @@ module Mirrors
 
     def lock_inventory
       @inventory.each do |item|
-        @grids[item.coords[0]][item.coords[1]].specials_grid[item.coords[2]] = item if item.coords
+        set_special(item.coords, item) if item.coords
       end
     end
 
@@ -117,34 +117,31 @@ module Mirrors
       # then the level is successfully complete
       @success = true if all_tiles_lit?
 
-      @lights.each do |light|
-        # Checks the item, to see if it's special or not
-        case item = get_special(light.coords)
-          when Teleporter
-            if light.teleported
-              light.teleported = false
-            elsif (dest = item.dest) && get_special(dest).is_a?(Teleporter)
-              item.apply(light)
-              light_tile
-
-              return
-            end
-          # When the item is a special item:
-          when Special
-            # Checks if the light has just been teleported, if it has
-            # then we ignore the portal on that square, since we don't
-            # want the light to bounce back and forth between portals
-            item.apply(light)
-          # When the item is a switch:
-          when Switch
-            # Change the state of all items associated with the switch
-            toggle_switch(item)
-        end
+      # Checks the item, to see if it's special or not
+      case item = get_special(@light.coords)
+        when Teleporter
+          if @light.teleported
+            @light.teleported = false
+          elsif (dest = item.dest) && get_special(dest).is_a?(Teleporter)
+            item.apply(@light)
+            light_tile
+            return
+          end
+        # When the item is a special item other than a teleporter:
+        when Special
+          # Checks if the light has just been teleported, if it has
+          # then we ignore the portal on that square, since we don't
+          # want the light to bounce back and forth between portals
+          item.apply(@light)
+        # When the item is a switch:
+        when Switch
+          # Change the state of all items associated with the switch
+          toggle_switch(item)
       end
 
-      move_lights
+      move_light
 
-      @success = false if lights_fail?
+      @success = false if @light.dir.nil?
     end
   end
 end

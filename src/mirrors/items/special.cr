@@ -3,9 +3,7 @@ require "./direction.cr"
 
 module Mirrors
   abstract class Special
-    property :coords
-
-    @coords : LevelCoords? = nil
+    property coords : LevelCoords? = nil
 
     abstract def apply(light : Light)
   end
@@ -89,10 +87,12 @@ module Mirrors
   # Switch - toggles various tiles on the board to
   # one of two states each.
   class Switch
-    property :coords, :targets
-    @coords : LevelCoords?
-    @targets : Array(Tuple(LevelCoords, Special?, Special?))
+    property coords : LevelCoords? = nil
 
-    def initialize(@targets); end
+    getter target  : LevelCoords
+    getter active  : Special?
+    getter passive : Special?
+
+    def initialize(@target, @active, @idle_item); end
   end
 end
