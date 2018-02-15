@@ -3,11 +3,11 @@ require "../items/*"
 
 module Mirrors
   class Grid
-    property tile_grid    : Array(Bool?)
-    property special_grid : Array(Item?)
+    property tile_grid : Array(Bool?)
+    property item_grid : Array(Item?)
 
-    getter exit_points  : Hash(Direction, Array(Int32))
+    getter exit_points : Hash(Direction, Array(Int32))
 
-    def initialize(@tile_grid, @special_grid, @exit_points); end
+    def initialize(@tile_grid, @item_grid, @exit_points); end
   end
 end

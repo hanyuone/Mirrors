@@ -54,6 +54,7 @@ module Mirrors
 
       draw_tiles
       draw_specials
+      draw_light
       
       @texture.display
 

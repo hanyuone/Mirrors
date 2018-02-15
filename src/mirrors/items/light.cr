@@ -4,12 +4,12 @@ module Mirrors
   # Light - the main game mechanic in Mirrors.
   # It can move around depending on its surroundings.
   class Light
-    property :dir, :coords, :teleported
-    @coords : LevelCoords
-    @dir : Direction?
+    property coords : LevelCoords?
+    property dir : Direction?
 
-    @teleported : Bool = false
+    property teleported : Bool = false
 
     def initialize(@coords, @dir); end
   end
 end
+

@@ -1,27 +1,23 @@
 {
-  "lights": [
-    {
-      "coords": [0, 0, 17],
-      "dir": "U"
-    }
-  ],
+  "lights": [],
+  "new_lights": 1,
   "dimensions": [1, 1],
   "grids": [
     {
       "coords": [0, 0],
       "tiles": [6, 7, 8, 11, 16],
-      "specials": [],
+      "items": [
+        {
+          "type": "R",
+          "coords": 6
+        }
+      ],
       "exits": {
         "L": [],
         "R": [],
         "U": [],
         "D": []
       }
-    }
-  ],
-  "inventory": [
-    {
-      "type": "R"
     }
   ]
 }
