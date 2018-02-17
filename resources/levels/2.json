@@ -1,0 +1,45 @@
+{
+  "lights": [],
+  "new_lights": 1,
+  "dimensions": [2, 1],
+  "grids": [
+    {
+      "coords": [0, 0],
+      "tiles": [6, 7, 8, 11, 16],
+      "items": [
+        {
+          "type": "L",
+          "coords": 6
+        }
+      ],
+      "exits": {
+        "L": [],
+        "R": [1],
+        "U": [],
+        "D": []
+      }
+    },
+    {
+      "coords": [0, 1],
+      "tiles": [6, 7, 8, 16, 17, 18],
+      "items": [
+        {
+          "type": "T",
+          "coords": 8,
+          "dest": [0, 1, 16]
+        },
+        {
+          "type": "T",
+          "coords": 16,
+          "dest": [0, 1, 8]
+        }
+      ],
+      "exits": {
+        "L": [1],
+        "R": [],
+        "U": [],
+        "D": []
+      }
+    }
+  ]
+}

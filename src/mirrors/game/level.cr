@@ -7,7 +7,6 @@ module Mirrors
     getter lights    : Array(Light)
     getter inventory : Array(Light)
     getter grids     : Array(Array(Grid?))
-    getter success   : Bool? = nil
     
     @teleported : Bool = false
 
@@ -17,12 +16,42 @@ module Mirrors
 
     def initialize(@lights, @inventory, @grids); end
 
-    private def move_new_grid(coords : LevelCoords, dir : Direction) : LevelCoords
-      return case dir
-        when Direction::Left  then {coords[0], coords[1] - 1, coords[2] + 20}
-        when Direction::Right then {coords[0], coords[1] + 1, coords[2] - 20}
-        when Direction::Up    then {coords[0] - 1, coords[1], coords[2] + 4}
-        else {coords[0] + 1, coords[1], coords[2] - 4}
+    private def in_bounds?(coords : LevelCoords) : Bool
+      return (0 <= coords[0] < @grids.size) && (0 <= coords[1] < @grids[0].size)
+    end
+
+    private def has_opening?(light : Light) : Bool
+      coords = light.coords
+      return false if coords.nil? || light.dir.nil?
+
+      return case light.dir
+        when Direction::Left, Direction::Right
+          get_grid(coords).not_nil!.exit_points[light.dir].includes?(coords[2] / 5)
+        else
+          get_grid(coords).not_nil!.exit_points[light.dir].includes?(coords[2] % 5)
+      end
+    end
+
+    private def move_new_grid(light : Light)
+      coords = light.coords
+      return if coords.nil? || light.dir.nil?
+
+      unless has_opening?(light)
+        light.dir = nil
+        return
+      end
+
+      new_coords = case light.dir
+        when Direction::Left  then {coords[0], coords[1] - 1, coords[2] + 4}
+        when Direction::Right then {coords[0], coords[1] + 1, coords[2] - 4}
+        when Direction::Up    then {coords[0] - 1, coords[1], coords[2] + 20}
+        else {coords[0] + 1, coords[1], coords[2] - 20}
+      end
+
+      if !in_bounds?(new_coords)
+        light.dir = nil
+      else
+        light.coords = new_coords
       end
     end
 
@@ -40,10 +69,10 @@ module Mirrors
         else x += 1
       end
 
-      light.coords = if (0 <= x < 5) && (0 <= y < 5)
-        {coords[0], coords[1], x * 5 + y}
+      if (0 <= x < 5) && (0 <= y < 5)
+        light.coords = {coords[0], coords[1], x * 5 + y}
       else
-        move_new_grid(coords, dir)
+        move_new_grid(light)
       end
     end
 
@@ -58,22 +87,22 @@ module Mirrors
     private def activate_item(light : Light)
       coords = light.coords
       return if coords.nil?
-      special = get_grid(coords).not_nil!.item_grid[coords[2]]
-      
-      case special
+
+      case special = get_grid(coords).not_nil!.item_grid[coords[2]]
         when Teleporter
           if @teleported
             @teleported = false
           else
             special.apply(light)
+            light_tile(light)
           end
         when Switch
           target = special.target
           special.active, special.passive = special.passive, special.active
 
           @grids[target[0]][target[1]].not_nil!.item_grid[target[2]] = special.active
-        else
-          special.apply(light) unless special.nil?
+        when Special
+          special.apply(light)
       end
     end
 
