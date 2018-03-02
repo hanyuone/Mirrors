@@ -6,14 +6,19 @@ require "./tile_size.cr"
 module Mirrors
   # Sprite that displays an entire grid, in a 500x500 SF::Sprite.
   class GridSprite
-    getter grid : Grid
+    getter level  : Level
+    getter coords : Coords
 
-    @texture = SF::RenderTexture.new(500, 500)
+    getter texture = SF::RenderTexture.new(500, 500)
 
-    def initialize(@grid); end
+    private def grid
+      return @level.grids[@coords[0]][@coords[1]].not_nil!
+    end
+
+    def initialize(@level, @coords); end
 
     private def draw_tiles
-      tiles = @grid.tile_grid
+      tiles = grid.tile_grid
 
       (0...25).each do |n|
         x, y = n / 5, n % 5
@@ -31,21 +36,49 @@ module Mirrors
       end
     end
 
-    # Super function to draw all of the special items
-    private def draw_specials
-      specials = @grid.special_grid
+    private def decide_colour(item : Item) : SF::Color
+      case item
+        when LeftMirror     then SF::Color::Red
+        when RightMirror    then SF::Color::Blue
+        when Teleporter     then SF::Color::Yellow
+        when Block          then SF::Color::Black
+        when HorizontalOnly then SF::Color::Magenta
+        when VerticalOnly   then SF::Color::Cyan
+        else SF::Color::Green
+      end
+    end
+
+    private def decide_sprite(item : Item) : SF::Sprite
+    end
+
+    # Super function to draw all of the special specials
+    private def draw_items
+      items = grid.item_grid
 
       (0...25).each do |n|
         x, y = n / 5, n % 5
 
-        special = specials[n]
-        return if special.nil?
+        item = items[n]
+        next if item.nil?
 
         tile = SF::RectangleShape.new({TILE_SIZE, TILE_SIZE})
         tile.position = {y * TILE_SIZE, x * TILE_SIZE}
-        tile.fill_color = decide_colour(special)
+        tile.fill_color = decide_colour(item)
 
         @texture.draw(tile)
+      end
+    end
+
+    private def draw_lights
+      @level.lights.each do |light|
+        next if {light.coords[0], light.coords[1]} != coords
+        x, y = light.coords[2] / 5, light.coords[2] % 5
+
+        light_shape = SF::CircleShape.new(TILE_SIZE / 2)
+        light_shape.position = {y * TILE_SIZE + (TILE_SIZE / 4), x * TILE_SIZE + (TILE_SIZE / 4)}
+        light_shape.fill_color = SF::Color::White
+
+        @texture.draw(light_shape)
       end
     end
 
@@ -53,8 +86,8 @@ module Mirrors
       @texture.clear
 
       draw_tiles
-      draw_specials
-      draw_light
+      draw_items
+      draw_lights
       
       @texture.display
 
@@ -62,7 +95,7 @@ module Mirrors
     end
 
     private def horizontal_connection(dir : Direction) : SF::Sprite
-      connect_coords = @grid.exits[dir]
+      connect_coords = grid.exits[dir]
       connect_texture = SF::RenderTexture.new(100, 500)
 
       (0...5).each do |n|
@@ -106,7 +139,7 @@ module Mirrors
     end
 
     private def vertical_connection(dir : Direction) : SF::Sprite
-      connect_coords = @grid.exits[dir]
+      connect_coords = grid.exits[dir]
       connect_texture = SF::RenderTexture.new(500, 100)
 
       (0...5).each do |n|

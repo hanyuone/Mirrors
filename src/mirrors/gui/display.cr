@@ -4,13 +4,11 @@ require "./listener.cr"
 
 module Mirrors
   abstract class Display
-    property :listener
-    getter :texture, :new_display
-    
-    @listener : Listener
-    @texture : SF::RenderTexture
+    property listener : Listener
+    getter texture : SF::RenderTexture
+    getter new_display : Display?
 
-    @new_display : Display?
+    property event : SF::Event? = nil
 
     def initialize
       @listener = Listener.new

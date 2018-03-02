@@ -89,10 +89,10 @@ module Mirrors
         lights.push(Light.new(coords, dir))
       end
 
-      inventory = [] of Light
+      inventory = [] of Tuple(LevelCoords, Direction)?
       new_lights = json["new_lights"].as_i
       new_lights.times do
-        inventory.push(Light.new(nil, nil))
+        inventory.push(nil)
       end
 
       dimensions = to_coords(json["dimensions"].as_a)

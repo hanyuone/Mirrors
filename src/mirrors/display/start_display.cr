@@ -1,5 +1,6 @@
 require "crsfml"
 require "../gui/*"
+require "./level_display.cr"
 
 module Mirrors
   class StartDisplay < Display

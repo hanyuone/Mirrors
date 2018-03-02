@@ -1,14 +1,13 @@
 require "../alias.cr"
-require "./item.cr"
 require "./direction.cr"
 
 module Mirrors
-  abstract class Special
+  abstract class Item
     abstract def apply(light : Light)
   end
 
   # Left and right mirrors
-  class LeftMirror < Special
+  class LeftMirror < Item
     CHANGE_DIRS = {
       Direction::Left => Direction::Down,
       Direction::Right => Direction::Up,
@@ -23,7 +22,7 @@ module Mirrors
     end
   end
 
-  class RightMirror < Special
+  class RightMirror < Item
     CHANGE_DIRS = {
       Direction::Left => Direction::Up,
       Direction::Right => Direction::Down,
@@ -39,7 +38,7 @@ module Mirrors
   end
 
   # Teleporter
-  class Teleporter < Special
+  class Teleporter < Item
     getter dest : LevelCoords
 
     def initialize(@dest); end
@@ -53,7 +52,7 @@ module Mirrors
   end
 
   # Block (prevents light from passing)
-  class Block < Special
+  class Block < Item
     def initialize; end
 
     def apply(light : Light)
@@ -62,7 +61,7 @@ module Mirrors
   end
 
   # One-way tiles
-  class HorizontalOnly < Special
+  class HorizontalOnly < Item
     def initialize; end
 
     def apply(light : Light)
@@ -70,7 +69,7 @@ module Mirrors
     end
   end
 
-  class VerticalOnly < Special
+  class VerticalOnly < Item
     def initialize; end
 
     def apply(light : Light)
@@ -80,11 +79,13 @@ module Mirrors
 
   # Switch - toggles various tiles on the board to
   # one of two states each.
-  class Switch
-    getter target  : LevelCoords
+  class Switch < Item
+    getter   target  : LevelCoords
     property active  : Item?
     property passive : Item?
 
     def initialize(@target, @active, @passive); end
+
+    def apply(light : Light); end
   end
 end

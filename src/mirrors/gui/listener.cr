@@ -1,16 +1,16 @@
+require "../alias.cr"
 require "./hover_sprite.cr"
 
 module Mirrors
   class Listener
-    getter :items, :has_reset
-    @items : Array(Tuple(HoverSprite, Bool)) = [] of Tuple(HoverSprite, Bool)
+    getter items : Array(Tuple(HoverSprite, Bool)) = [] of Tuple(HoverSprite, Bool)
 
     @mouse_pos : Coords? = nil
     @prev_mouse_pos : Coords? = nil
 
     @hovered_index : Int32? = nil
 
-    @has_reset = false
+    getter has_reset = false
 
     def initialize; end
 

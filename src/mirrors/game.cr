@@ -19,7 +19,7 @@ module Mirrors
     end
 
     # Place `@display` on the screen.
-    private def display_items
+    private def place_display
       @window.clear
       @window.draw(@display.screen.not_nil!)
       @window.display
@@ -37,7 +37,7 @@ module Mirrors
         next if event.is_a?(Nil)
 
         listen_once if event.is_a?(SF::Event::MouseMoved)
-        display_items
+        place_display
       end
     end
 
@@ -51,15 +51,16 @@ module Mirrors
               break unless event.button == SF::Mouse::Button::Left
               listen_once
               click_loop
-              
               @display.listener.reset
             when SF::Event::MouseMoved
               mouse_pos = SF::Mouse.get_position(@window)
               @display.listener.listen_hover({mouse_pos[0], mouse_pos[1]})
+            else
+              @display.event = event
           end
         end
 
-        display_items
+        place_display
 
         if @display.new_display.is_a?(Display)
           @display.listener.wipe

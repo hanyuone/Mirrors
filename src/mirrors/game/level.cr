@@ -5,7 +5,7 @@ require "../items/*"
 module Mirrors
   class Level
     getter lights    : Array(Light)
-    getter inventory : Array(Light)
+    getter inventory : Array(Tuple(LevelCoords, Direction)?)
     getter grids     : Array(Array(Grid?))
     
     @teleported : Bool = false
@@ -33,8 +33,9 @@ module Mirrors
     end
 
     private def move_new_grid(light : Light)
+      return if light.dir.nil?
+      
       coords = light.coords
-      return if coords.nil? || light.dir.nil?
 
       unless has_opening?(light)
         light.dir = nil
@@ -56,11 +57,10 @@ module Mirrors
     end
 
     private def move_light(light : Light)
-      coords = light.coords
       dir = light.dir
-      return if coords.nil? || dir.nil?
+      return if dir.nil?
 
-      x, y = coords[2] / 5, coords[2] % 5
+      x, y = light.coords[2] / 5, light.coords[2] % 5
 
       case dir
         when Direction::Left  then y -= 1
@@ -70,7 +70,7 @@ module Mirrors
       end
 
       if (0 <= x < 5) && (0 <= y < 5)
-        light.coords = {coords[0], coords[1], x * 5 + y}
+        light.coords = {light.coords[0], light.coords[1], x * 5 + y}
       else
         move_new_grid(light)
       end
@@ -78,17 +78,13 @@ module Mirrors
 
     private def light_tile(light : Light)
       coords = light.coords
-      return if coords.nil?
       tile = get_grid(coords).not_nil!.tile_grid[coords[2]]
 
       @grids[coords[0]][coords[1]].not_nil!.tile_grid[coords[2]] = true unless tile.nil?
     end
 
     private def activate_item(light : Light)
-      coords = light.coords
-      return if coords.nil?
-
-      case special = get_grid(coords).not_nil!.item_grid[coords[2]]
+      case item = get_grid(light.coords).not_nil!.item_grid[light.coords[2]]
         when Teleporter
           if @teleported
             @teleported = false
@@ -107,12 +103,15 @@ module Mirrors
     end
 
     def place_light(index : Int32, coords : LevelCoords, dir : Direction)
-      @inventory[index].coords = coords
-      @inventory[index].dir = dir
+      @inventory[index] = {coords, dir}
     end
 
     def place_inventory
-      @lights += @inventory
+      @inventory.each do |light|
+        next if light.nil?
+        new_light = Light.new(light[0], light[1])
+        @lights.push(new_light)
+      end
     end
 
     private def all_tiles_lit? : Bool
